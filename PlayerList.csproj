@@ -1,0 +1,128 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <AssemblyName>com.aeryle.playerlist</AssemblyName>
+    <Product>PlayerList</Product>
+    <Version>0.1.0-alpha</Version>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>latest</LangVersion>
+    <RestoreAdditionalProjectSources>
+      https://api.nuget.org/v3/index.json;
+      https://nuget.bepinex.dev/v3/index.json;
+      https://nuget.samboy.dev/v3/index.json
+    </RestoreAdditionalProjectSources>
+    <RootNamespace>PlayerList</RootNamespace>
+    <OutputPath>release/</OutputPath>
+    <SuppressTfmSupportBuildWarnings>true</SuppressTfmSupportBuildWarnings>
+  </PropertyGroup>
+
+  <!-- Deployment properties (set these to your desired paths) -->
+  <PropertyGroup>
+    <GameDir>/mnt/g/Decompiled/Knightfall</GameDir>
+    <PluginsPath>/mnt/g/Decompiled/Knightfall/BepInEx/plugins</PluginsPath>
+    <PluginPath>$(PluginsPath)/PlayerList</PluginPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BepInEx.Unity.IL2CPP" Version="6.0.0-be.*" IncludeAssets="compile" />
+    <PackageReference Include="BepInEx.PluginInfoProps" Version="2.*" />
+    <PackageReference Include="roslynator.analyzers" Version="4.13.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="roslynator.formatting.analyzers" Version="4.13.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Analyzer Include="./libs/HarmonyPatchAnalyzer.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Add UI libs -->
+    <Reference Include="ClickableTransparentOverlay">
+      <HintPath>libs/runtime/ClickableTransparentOverlay.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="runtime/Hexa.NET.ImGui">
+      <HintPath>libs/runtime/Hexa.NET.ImGui.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+
+    <!-- Add game libs -->
+    <Reference Include="Assembly-CSharp">
+      <HintPath>libs/Assembly-CSharp.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+
+    <!-- Add utils -->
+    <Reference Include="Il2cppmscorlib">
+      <HintPath>libs/Il2cppmscorlib.dll</HintPath>
+    </Reference>
+    <Reference Include="UniverseLib.BIE.IL2CPP.Interop">
+      <HintPath>libs/runtime/UniverseLib.BIE.IL2CPP.Interop.dll</HintPath>
+    </Reference>
+
+    <!-- Add Unity's core modules -->
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>libs/UnityEngine.CoreModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>libs/UnityEngine.InputLegacyModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.InputModule">
+      <HintPath>libs/UnityEngine.InputModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+
+    <!-- Add networking modules -->
+    <Reference Include="Photon3Unity3D">
+      <HintPath>libs/Photon3Unity3D.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="PhotonRealtime">
+      <HintPath>libs/PhotonRealtime.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="PhotonUnityNetworking">
+      <HintPath>libs/PhotonUnityNetworking.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!-- Item groups for deployment files -->
+  <ItemGroup>
+    <!-- Runtime DLLs from libs/runtime -->
+    <RuntimeDlls Include="libs/runtime/*.dll" />
+    <!-- All files from assets folder (recursively) -->
+    <AssetFiles Include="assets/**" />
+  </ItemGroup>
+
+  <!-- Post-build target to mimic build.fish -->
+  <Target Name="DeployPlugin" AfterTargets="Build">
+    <!-- Remove the old plugin directory -->
+    <RemoveDir Directories="$(PluginPath)" Condition="Exists('$(PluginPath)')" />
+
+    <!-- Create necessary directories -->
+    <MakeDir Directories="$(PluginPath)/runtime" />
+    <MakeDir Directories="$(PluginPath)/assets" />
+
+    <!-- Copy runtime DLLs -->
+    <Copy SourceFiles="@(RuntimeDlls)" DestinationFolder="$(PluginPath)/runtime" />
+
+    <!-- Copy asset files (preserving folder structure relative to assets/) -->
+    <Copy SourceFiles="@(AssetFiles)"
+      DestinationFiles="@(AssetFiles->'$(PluginPath)/assets/%(RecursiveDir)%(Filename)%(Extension)')" />
+
+    <!-- Copy main plugin DLL (assumes output is in release/$(TargetFramework)/) -->
+    <Copy SourceFiles="release/$(TargetFramework)/$(AssemblyName).dll"
+      DestinationFolder="$(PluginPath)" />
+
+    <!-- Launch the game -->
+    <Exec Command="$(GameDir)/Knightfall.exe" />
+  </Target>
+</Project>
