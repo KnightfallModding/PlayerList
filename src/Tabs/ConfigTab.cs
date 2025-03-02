@@ -1,10 +1,13 @@
 using Hexa.NET.ImGui;
 using PlayerList.GUI;
+using PlayerList.Utils;
 
 namespace PlayerList.Tabs;
 
-public static class ConfigTabs
+public static class ConfigTab
 {
+  public static string CurrentlySettingKeybind { get; set; } = "";
+
   public static void Render()
   {
     if (ImGui.BeginTabItem("Config"))
@@ -22,14 +25,14 @@ public static class ConfigTabs
     var isMenuEnabled = Renderer.IsVisible;
 
     ImGui.Checkbox("Enable menu", &isMenuEnabled);
-    if (isMenuEnabled != Renderer.IsVisible) ConfigManager.ConfigManager.EnableMenu.Value = isMenuEnabled;
+    if (isMenuEnabled != Renderer.IsVisible) ConfigManager.EnableMenu.Value = isMenuEnabled;
   }
 
   private static unsafe void DisplayUsernamesCheckbox()
   {
-    var areUsernamesDisplayed = ConfigManager.ConfigManager.DisplayUsernames.Value;
+    var areUsernamesDisplayed = ConfigManager.DisplayUsernames.Value;
 
     ImGui.Checkbox("Display usernames", &areUsernamesDisplayed);
-    if (areUsernamesDisplayed != ConfigManager.ConfigManager.DisplayUsernames.Value) ConfigManager.ConfigManager.DisplayUsernames.Value = areUsernamesDisplayed;
+    if (areUsernamesDisplayed != ConfigManager.DisplayUsernames.Value) ConfigManager.DisplayUsernames.Value = areUsernamesDisplayed;
   }
 }

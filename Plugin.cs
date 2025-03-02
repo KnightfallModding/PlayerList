@@ -1,8 +1,9 @@
 ﻿using BepInEx;
 using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP;
-using PlayerList.ConfigManager;
+using HarmonyLib;
 using PlayerList.GUI;
+using PlayerList.Patches;
 using PlayerList.Utils;
 using System.Diagnostics;
 using System.Threading.Tasks;
@@ -20,11 +21,16 @@ public class Plugin : BasePlugin
     Log = base.Log;
     Log.LogInfo($"Plugin {MyPluginInfo.PLUGIN_GUID} is loaded!");
 
+    AddComponent<InputsManager>();
+
     ProcessUtils.Process = Process.GetProcessesByName("Knightfall")[0];
     ProcessUtils.GameWindowHandle = ProcessUtils.FindWindow(null, "Knightfall");
-    ConfigManager.ConfigManager.Setup();
+    ConfigManager.Setup();
 
     var renderer = new Renderer();
     Task.Run(renderer.Run);
+
+    Harmony.CreateAndPatchAll(typeof(PhotonHandlerPatch));
+    Harmony.CreateAndPatchAll(typeof(PhotonNetworkPatch));
   }
 }

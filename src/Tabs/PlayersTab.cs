@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using ExitGames.Client.Photon;
 using ExitGames.Client.Photon.StructWrapping;
 using Hexa.NET.ImGui;
-using PlayerList.ConfigManager;
+using PlayerList.Utils;
 
 namespace PlayerList.Tabs;
 
@@ -33,7 +33,7 @@ public static class PlayersTab
 
         return;
       }
-      if (!ConfigManager.ConfigManager.DisplayUsernames.Value) return;
+      if (!ConfigManager.DisplayUsernames.Value) return;
 
       foreach (var player in Players)
       {

@@ -1,12 +1,9 @@
-using System.Data;
-using System.IO;
 using BepInEx;
 using BepInEx.Configuration;
 using Hexa.NET.ImGui;
-using PlayerList.Utils;
-using UnityEngine;
+using System.IO;
 
-namespace PlayerList.ConfigManager;
+namespace PlayerList.Utils;
 
 public enum PositionEnum
 {
@@ -18,7 +15,7 @@ public enum PositionEnum
 
 public static class ConfigManager
 {
-  public static ConfigFile File;
+  public static ConfigFile File { get; private set; }
 
   public static ConfigEntry<PositionEnum> Position { get; private set; }
   public static ConfigEntry<int> FontSize { get; private set; }
@@ -42,8 +39,8 @@ public static class ConfigManager
 
   public static void ResetSettings()
   {
-    EnableMenu.Value = (bool)EnableMenu.DefaultValue;
-    DisplayUsernames.Value = (bool)DisplayUsernames.DefaultValue;
+    EnableMenu.Value = EnableMenu.DefaultValue;
+    DisplayUsernames.Value = DisplayUsernames.DefaultValue;
     Position.Value = (PositionEnum)Position.DefaultValue;
     FontSize.Value = (int)FontSize.DefaultValue;
     Opacity.Value = (float)Opacity.DefaultValue;
