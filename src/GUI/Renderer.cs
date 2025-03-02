@@ -2,9 +2,8 @@ using BepInEx;
 using ClickableTransparentOverlay;
 using Hexa.NET.ImGui;
 using HexaGen.Runtime;
-using PlayerList.ConfigManager;
-using PlayerList.Tabs;
 using PlayerList.Utils;
+using PlayerList.Tabs;
 using UnityEngine;
 using System.IO;
 using System.Threading.Tasks;
@@ -13,7 +12,7 @@ namespace PlayerList.GUI;
 
 public class Renderer : Overlay
 {
-  public static bool IsVisible { get; set; } = ConfigManager.ConfigManager.EnableMenu.Value;
+  public static bool IsVisible { get; set; } = ConfigManager.EnableMenu.Value;
 
   public Renderer() : base(MyPluginInfo.PLUGIN_NAME, true, Screen.width, Screen.height)
   {
@@ -35,12 +34,14 @@ public class Renderer : Overlay
     const string emojisFontName = "Twemoji";
     ReplaceFont(__ => _ = new FontsManager(fontPath, fontName, emojisFontName));
 
+    InputsManager.DetectImGuiKeybinds();
+
     return Task.CompletedTask;
   }
 
   protected override void Render()
   {
-    if (!IsVisible || !ConfigManager.ConfigManager.EnableMenu.Value) return;
+    if (!IsVisible || !ConfigManager.EnableMenu.Value) return;
 
     MoveWindow();
 
@@ -48,7 +49,7 @@ public class Renderer : Overlay
     ImGui.Begin(MyPluginInfo.PLUGIN_NAME);
     ImGui.BeginTabBar(MyPluginInfo.PLUGIN_GUID);
     PlayersTab.Render();
-    ConfigTabs.Render();
+    ConfigTab.Render();
     ImGui.EndTabBar();
     ImGui.End();
     ImGui.PopFont();
@@ -76,7 +77,7 @@ public class Renderer : Overlay
     var windowWidth = ImGui.GetWindowWidth();
     var windowHeight = ImGui.GetWindowHeight();
 
-    switch (ConfigManager.ConfigManager.Position.Value)
+    switch (ConfigManager.Position.Value)
     {
       case PositionEnum.TopLeft:
         ImGui.SetNextWindowPos(new(0, 0));
