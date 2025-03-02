@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Hexa.NET.ImGui;
 using PlayerList.Utils;
 
@@ -41,8 +42,11 @@ public static class PlayersTab
 
       foreach (var player in Players)
       {
+        var prefixes = player.Prefixes.Length > 0 ? $"[{string.Join("][", player.Prefixes)}] " : "";
+        var postfixes = player.Prefixes.Length > 0 ? $" [{string.Join("][", player.Postfixes)}]" : "";
+
         ImGui.AlignTextToFramePadding();
-        ImGui.Text($"{string.Concat(player.Prefixes)} {player.Username} {string.Concat(player.Postfixes)}");
+        ImGui.Text(prefixes + player.Username + postfixes);
       }
 
       ImGui.EndTabItem();
