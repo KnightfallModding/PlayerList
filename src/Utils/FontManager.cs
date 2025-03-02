@@ -2,6 +2,7 @@ using System.IO;
 using System.Reflection.Metadata;
 using Hexa.NET.ImGui;
 using Hexa.NET.ImGui.Utilities;
+using Il2CppSystem.Runtime.Remoting.Messaging;
 
 namespace PlayerList.Utils;
 
@@ -13,7 +14,7 @@ public enum FontWeight
   BoldItalic
 }
 
-public static class FontsManager
+public class FontsManager
 {
   public static ImFontPtr RegularFont { get; private set; }
   public static ImFontPtr BoldFont { get; private set; }
@@ -21,15 +22,25 @@ public static class FontsManager
   public static ImFontPtr BoldItalicFont { get; private set; }
   public static int DefaultFontSize { get; } = 16;
 
-  public static void Setup(string path, string name)
+  private string path;
+  private string fontName;
+  private string emojisFontName;
+
+  public FontsManager(string path, string fontName, string emojisFontName)
   {
-    RegularFont = LoadFont(path, name, FontWeight.Regular);
-    BoldFont = LoadFont(path, name, FontWeight.Bold);
-    ItalicFont = LoadFont(path, name, FontWeight.Italic);
-    BoldItalicFont = LoadFont(path, name, FontWeight.BoldItalic);
+    this.path = path;
+    this.fontName = fontName;
+    this.emojisFontName = emojisFontName;
+
+    RegularFont = LoadFont(FontWeight.Regular);
+    BoldFont = LoadFont(FontWeight.Bold);
+    ItalicFont = LoadFont(FontWeight.Italic);
+    BoldItalicFont = LoadFont(FontWeight.BoldItalic);
   }
 
-  private static ImFontPtr LoadFont(string path, string name, FontWeight weight) => new ImGuiFontBuilder()
+  private ImFontPtr LoadFont(FontWeight weight)
+  {
+    new ImGuiFontBuilder()
     .AddDefaultFont()
     .SetOption(cfg =>
     {
@@ -39,6 +50,23 @@ public static class FontsManager
       cfg.PixelSnapH = true;
       cfg.FontBuilderFlags |= (uint)ImGuiFreeTypeBuilderFlags.LoadColor;
     })
-    .AddFontFromFileTTF(Path.Combine(path, $"{name}-{weight}.ttf"), DefaultFontSize, [0x1, 0x1FFFF])
+    .AddFontFromFileTTF(Path.Combine(path, $"{fontName}-{weight}.ttf"), DefaultFontSize, [0x1, 0x1FFFF])
     .Build();
+
+    return LoadEmojisFont();
+  }
+
+  private ImFontPtr LoadEmojisFont()
+  {
+    return new ImGuiFontBuilder().SetOption(cfg =>
+    {
+      cfg.MergeMode = true;
+      cfg.OversampleH = 1;
+      cfg.OversampleV = 1;
+      cfg.PixelSnapH = true;
+      cfg.FontBuilderFlags |= (uint)ImGuiFreeTypeBuilderFlags.LoadColor;
+    })
+    .AddFontFromFileTTF(Path.Combine(path, $"{emojisFontName}.ttf"), DefaultFontSize, [0x1, 0x1FFFF])
+    .Build();
+  }
 }
