@@ -1,0 +1,89 @@
+# top-most EditorConfig file
+root = true
+
+[*.cs]
+#####################################
+# Basic Formatting Settings
+#####################################
+indent_style = space
+indent_size = 4
+tab_width = 4
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+#####################################
+# Organize Usings
+#####################################
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = true
+
+#####################################
+# Analyzer Configuration: Treat all style violations as errors
+#####################################
+dotnet_analyzer_diagnostic.category-Style.severity = error
+dotnet_analyzer_diagnostic.category-Design.severity = error
+dotnet_analyzer_diagnostic.category-Documentation.severity = error
+dotnet_analyzer_diagnostic.category-Reliability.severity = error
+dotnet_analyzer_diagnostic.category-Security.severity = error
+dotnet_analyzer_diagnostic.category-Usage.severity = error
+
+#####################################
+# 'var' Usage: Require explicit type declarations
+#####################################
+csharp_style_var_elsewhere = false:error
+csharp_style_var_for_built_in_types = false:error
+csharp_style_var_when_type_is_apparent = false:error
+
+#####################################
+# Expression-Bodied Members: Force block bodies
+#####################################
+csharp_style_expression_bodied_methods = false:error
+csharp_style_expression_bodied_accessors = false:error
+
+#####################################
+# Braces: Always require braces for control statements
+#####################################
+csharp_prefer_braces = true:error
+
+#####################################
+# Namespace Declarations: Use file-scoped namespaces
+#####################################
+csharp_style_namespace_declarations = file_scoped:error
+
+#####################################
+# Member Qualification: Require 'this.' prefix for instance members
+#####################################
+dotnet_style_qualification_for_field = true:error
+dotnet_style_qualification_for_property = true:error
+dotnet_style_qualification_for_method = true:error
+dotnet_style_qualification_for_event = true:error
+
+#####################################
+# Naming Conventions: Enforce PascalCase for types
+#####################################
+dotnet_naming_rule.types_should_be_pascal_case.severity = error
+dotnet_naming_rule.types_should_be_pascal_case.symbols = types
+dotnet_naming_rule.types_should_be_pascal_case.style = pascal_case
+
+dotnet_naming_symbols.types.applicable_kinds = class, struct, interface, enum
+dotnet_naming_symbols.types.applicable_accessibilities = public, internal, protected, private
+dotnet_naming_style.pascal_case.capitalization = pascal_case
+
+#####################################
+# Readonly Fields: Enforce fields to be readonly when possible
+#####################################
+dotnet_style_readonly_field = true:error
+
+#####################################
+# Accessibility Modifiers: Always require explicit accessibility modifiers
+#####################################
+dotnet_style_require_accessibility_modifiers = always:error
+
+#####################################
+# Compiler Warnings as Errors: Disallow unused or null issues
+#####################################
+dotnet_diagnostic.CS0168.severity = error  # Variable declared but never used
+dotnet_diagnostic.CS0219.severity = error  # Variable assigned but never used
+dotnet_diagnostic.CS8600.severity = error  # Null literal or possible null value conversion issues
