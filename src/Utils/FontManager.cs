@@ -19,7 +19,7 @@ public static class FontsManager
   public static ImFontPtr BoldFont { get; private set; }
   public static ImFontPtr ItalicFont { get; private set; }
   public static ImFontPtr BoldItalicFont { get; private set; }
-  public static int DefaultFontSize { get; } = 18;
+  public static int DefaultFontSize { get; } = 16;
 
   public static void Setup(string path, string name)
   {
