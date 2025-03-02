@@ -46,7 +46,7 @@
       <HintPath>libs/runtime/ClickableTransparentOverlay.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="runtime/Hexa.NET.ImGui">
+    <Reference Include="Hexa.NET.ImGui">
       <HintPath>libs/runtime/Hexa.NET.ImGui.dll</HintPath>
       <Private>False</Private>
     </Reference>
