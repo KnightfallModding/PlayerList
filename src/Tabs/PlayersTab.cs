@@ -1,10 +1,14 @@
 using System.Collections.Generic;
-using ExitGames.Client.Photon;
-using ExitGames.Client.Photon.StructWrapping;
 using Hexa.NET.ImGui;
 using PlayerList.Utils;
 
 namespace PlayerList.Tabs;
+
+public struct Prefixes
+{
+  public const string Creator = "👑";
+  public const string T1nquen = "🤡";
+}
 
 public class PlayerDetails
 {
@@ -45,20 +49,46 @@ public static class PlayersTab
     }
   }
 
-  public static void GetPrefixes(Photon.Realtime.Player player) { }
+  // TODO: Fetch prefixes, usernames and postfixes from an API
+  public static string[] GetPrefixes(string UUID) => UUID switch
+  {
+    "aeryle" => [Prefixes.Creator],
+    "t1nquen#goat" => [Prefixes.T1nquen],
+    _ => [],
+  };
+  public static string GetUsername(Photon.Realtime.Player player, string UUID)
+  {
+    return UUID switch
+    {
+      "souptis" => $"<color=#D3F5F5>{player.NickName}</color>",
+      _ => player.NickName,
+    };
+  }
+  public static string[] GetPostfixes(string UUID) => UUID switch
+  {
+    _ => [],
+  };
 
   public static void Add(Photon.Realtime.Player player)
   {
-    var UUID = player.CustomProperties["UUID"];
+#nullable enable
+    string? UUID = null;
+#nullable disable
+    try
+    {
+      UUID = player.CustomProperties["UUID"].ToString().ToLower();
+    }
+    catch { }
 
     PlayerDetails details = new()
     {
       LocalId = player.ActorNumber,
-      UUID = player.CustomProperties.ContainsKey("UUID") ? UUID.ToString() : null,
-      Username = "",
-      Prefixes = [],
-      Postfixes = [],
+      UUID = UUID,
+      Prefixes = UUID != null ? GetPrefixes(UUID) : [],
+      Username = UUID != null ? GetUsername(player, UUID) : player.NickName,
+      Postfixes = UUID != null ? GetPostfixes(UUID) : [],
     };
+    Players.Add(details);
   }
 
   public static void Clear() => Players = [];
