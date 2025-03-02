@@ -6,7 +6,7 @@ using Hexa.NET.ImGui;
 using PlayerList.Utils;
 using UnityEngine;
 
-namespace PlayerList.Config;
+namespace PlayerList.ConfigManager;
 
 public enum PositionEnum
 {

@@ -1,7 +1,7 @@
 ﻿using BepInEx;
 using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP;
-using PlayerList.Config;
+using PlayerList.ConfigManager;
 using PlayerList.GUI;
 using PlayerList.Utils;
 using System.Diagnostics;
@@ -22,7 +22,7 @@ public class Plugin : BasePlugin
 
     ProcessUtils.Process = Process.GetProcessesByName("Knightfall")[0];
     ProcessUtils.GameWindowHandle = ProcessUtils.FindWindow(null, "Knightfall");
-    ConfigManager.Setup();
+    ConfigManager.ConfigManager.Setup();
 
     var renderer = new Renderer();
     Task.Run(renderer.Run);
