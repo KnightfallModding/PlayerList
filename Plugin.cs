@@ -1,6 +1,8 @@
 ﻿using BepInEx;
 using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP;
+using PlayerList.GUI;
+using System.Threading.Tasks;
 
 namespace PlayerList;
 
@@ -14,5 +16,8 @@ public class Plugin : BasePlugin
     // Plugin startup logic
     Log = base.Log;
     Log.LogInfo($"Plugin {MyPluginInfo.PLUGIN_GUID} is loaded!");
+
+    var renderer = new Renderer();
+    Task.Run(renderer.Run);
   }
 }
