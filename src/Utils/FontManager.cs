@@ -1,8 +1,6 @@
-using System.IO;
-using System.Reflection.Metadata;
 using Hexa.NET.ImGui;
 using Hexa.NET.ImGui.Utilities;
-using Il2CppSystem.Runtime.Remoting.Messaging;
+using System.IO;
 
 namespace PlayerList.Utils;
 
@@ -22,9 +20,9 @@ public class FontsManager
   public static ImFontPtr BoldItalicFont { get; private set; }
   public static int DefaultFontSize { get; } = 16;
 
-  private string path;
-  private string fontName;
-  private string emojisFontName;
+  private readonly string path;
+  private readonly string fontName;
+  private readonly string emojisFontName;
 
   public FontsManager(string path, string fontName, string emojisFontName)
   {
