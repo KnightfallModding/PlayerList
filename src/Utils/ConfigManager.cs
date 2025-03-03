@@ -27,7 +27,7 @@ public static class ConfigManager
   {
     File = new ConfigFile(Path.Join(Paths.ConfigPath, $"{MyPluginInfo.PLUGIN_GUID}.cfg"), true);
 
-    EnableMenu = new ConfigWithKeybind<bool>(File, "EnableMenu", false, false, false, false, ImGuiKey.F9);
+    EnableMenu = new ConfigWithKeybind<bool>(File, "EnableMenu", true, false, false, false, ImGuiKey.F9);
     DisplayUsernames = new ConfigWithKeybind<bool>(File, "DisplayUsernames", false, false, false, false, ImGuiKey.F10);
     Position = File.Bind("General", "Position", PositionEnum.TopLeft, "Where to place the menu on the screen");
     FontSize = File.Bind("General", "FontSize", FontsManager.DefaultFontSize);
