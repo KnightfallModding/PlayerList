@@ -49,7 +49,7 @@ public class Renderer : Overlay
     MoveWindow();
 
     ImGui.PushFont(FontsManager.RegularFont);
-    ImGui.Begin(MyPluginInfo.PLUGIN_NAME, ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoResize);
+    ImGui.Begin(MyPluginInfo.PLUGIN_NAME, ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoNav);
     ImGui.BeginTabBar(MyPluginInfo.PLUGIN_GUID);
     windowWidth = ImGui.GetWindowWidth();
     windowHeight = ImGui.GetWindowHeight();

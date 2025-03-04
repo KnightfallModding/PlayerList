@@ -23,6 +23,18 @@ public static class KeyMapper
   { "End",  KeyCode.End },
   { "Insert",  KeyCode.Insert },
   { "Delete",  KeyCode.Delete },
+
+  // Uncategorized keys
+  { "Backslash",  KeyCode.Backslash },
+  { "GraveAccent",  KeyCode.BackQuote },
+  { "Comma",  KeyCode.Comma },
+  { "Period",  KeyCode.Period },
+  { "Slash",  KeyCode.Slash },
+  { "Apostrophe",  KeyCode.Quote },
+  { "Semicolon",  KeyCode.Semicolon },
+  { "ScrollLock",  KeyCode.ScrollLock },
+  { "Pause",  KeyCode.Pause },
+
   // Editing keys
   { "Backspace", KeyCode.Backspace },
   { "Space", KeyCode.Space },
