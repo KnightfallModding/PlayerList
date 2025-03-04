@@ -1,5 +1,6 @@
 using Hexa.NET.ImGui;
 using PlayerList.GUI.Tabs;
+using Renderer = PlayerList.GUI.Renderer;
 using System.Linq;
 using UnityEngine;
 
@@ -16,7 +17,12 @@ class InputsManager : MonoBehaviour
     ImGuiKey.MouseWheelX,
     ImGuiKey.MouseWheelY,
     ImGuiKey.MouseX1,
-    ImGuiKey.MouseX2
+    ImGuiKey.MouseX2,
+
+    // Disable those keys because once set, it's impossible to use them in Unity
+    ImGuiKey.Enter,
+    ImGuiKey.KeypadEnter,
+    ImGuiKey.CapsLock,
 ];
   private static readonly ImGuiKey[] ModKeys =
   [
