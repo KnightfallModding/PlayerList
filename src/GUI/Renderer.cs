@@ -2,8 +2,9 @@ using BepInEx;
 using ClickableTransparentOverlay;
 using Hexa.NET.ImGui;
 using HexaGen.Runtime;
-using PlayerList.Utils;
+using PlayerList.Skins.Default;
 using PlayerList.Tabs;
+using PlayerList.Utils;
 using UnityEngine;
 using System.IO;
 using System.Threading.Tasks;
@@ -33,8 +34,7 @@ public class Renderer : Overlay
     const string fontName = "UbuntuMonoNerdFontMono";
     const string emojisFontName = "Twemoji";
     ReplaceFont(__ => _ = new FontsManager(fontPath, fontName, emojisFontName));
-
-    InputsManager.DetectImGuiKeybinds();
+    LoadStyle();
 
     return Task.CompletedTask;
   }
@@ -44,6 +44,7 @@ public class Renderer : Overlay
     if (!IsVisible || !ConfigManager.EnableMenu.Value) return;
 
     MoveWindow();
+    InputsManager.DetectImGuiKeybinds();
 
     ImGui.PushFont(FontsManager.RegularFont);
     ImGui.Begin(MyPluginInfo.PLUGIN_NAME);
@@ -96,4 +97,16 @@ public class Renderer : Overlay
         break;
     }
   }
+
+  private static void LoadStyle() => DefaultSkin.Setup();
+
+  public static void ToggleMenu()
+  {
+    ConfigManager.EnableMenu.Value = !ConfigManager.EnableMenu.Value;
+    IsVisible = !ConfigManager.EnableMenu.Value;
+
+    if (!IsVisible) ProcessUtils.FocusGame();
+  }
+
+  public static void ToggleUsernames() => ConfigManager.DisplayUsernames.Value = !ConfigManager.DisplayUsernames.Value;
 }
