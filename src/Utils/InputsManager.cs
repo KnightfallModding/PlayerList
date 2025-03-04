@@ -32,7 +32,11 @@ class InputsManager : MonoBehaviour
     ImGuiKey.ReservedForModShift,
     ImGuiKey.ReservedForModAlt,
     ImGuiKey.ModAlt,
-    ImGuiKey.ReservedForModSuper
+    ImGuiKey.ReservedForModSuper,
+    ImGuiKey.ModSuper,
+    ImGuiKey.LeftSuper,
+    ImGuiKey.RightSuper,
+    ImGuiKey.PrintScreen,
   ];
 
   private void Update()
