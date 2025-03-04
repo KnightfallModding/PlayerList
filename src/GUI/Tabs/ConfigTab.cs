@@ -163,8 +163,7 @@ public static class ConfigTab
     }
     else if (ImGui.IsItemDeactivated())
     {
-      ImGui.GetFont().Scale = currentFontSize / (float)FontsManager.DefaultFontSize;
-      ConfigManager.FontSize.Value = currentFontSize;
+      Renderer.ChangeFontSize(currentFontSize);
     }
   }
 }

@@ -32,10 +32,10 @@ class InputsManager : MonoBehaviour
   private void Update()
   {
     if (Input.GetKeyDown(KeyMapper.ConvertImGuiToUnity(ConfigManager.EnableMenu.Keybind.Key)) && !ShouldCancel(ConfigManager.EnableMenu.Keybind))
-      ConfigManager.EnableMenu.Value = !ConfigManager.EnableMenu.Value;
+      Renderer.ToggleMenu();
 
     if (Input.GetKeyDown(KeyMapper.ConvertImGuiToUnity(ConfigManager.DisplayUsernames.Keybind.Key)) && !ShouldCancel(ConfigManager.DisplayUsernames.Keybind))
-      ConfigManager.DisplayUsernames.Value = !ConfigManager.DisplayUsernames.Value;
+      Renderer.ToggleUsernames();
   }
 
   private static bool ShouldCancel(Keybind hotkey, bool isImGui = false)
@@ -61,7 +61,7 @@ class InputsManager : MonoBehaviour
       if (ConfigManager.EnableMenu.Value) ProcessUtils.FocusGame();
       else ProcessUtils.FocusOverlay();
 
-      ConfigManager.EnableMenu.Value = !ConfigManager.EnableMenu.Value;
+      Renderer.ToggleMenu();
     }
 
     if (ImGuiP.IsKeyPressed(ConfigManager.DisplayUsernames.Keybind.Key) && !ShouldCancel(ConfigManager.DisplayUsernames.Keybind, true))
