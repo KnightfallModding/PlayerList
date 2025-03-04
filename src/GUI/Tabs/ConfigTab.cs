@@ -4,7 +4,7 @@ using PlayerList.GUI;
 using PlayerList.Utils;
 using System.Numerics;
 
-namespace PlayerList.Tabs;
+namespace PlayerList.GUI.Tabs;
 
 public static class ConfigTab
 {
