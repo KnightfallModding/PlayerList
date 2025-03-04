@@ -1,7 +1,6 @@
-using System.Collections.Generic;
-using System.Linq;
 using Hexa.NET.ImGui;
 using PlayerList.Utils;
+using System.Collections.Generic;
 
 namespace PlayerList.GUI.Tabs;
 

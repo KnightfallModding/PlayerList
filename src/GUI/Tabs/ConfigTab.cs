@@ -1,6 +1,4 @@
 using Hexa.NET.ImGui;
-using Landfall.UI;
-using PlayerList.GUI;
 using PlayerList.Utils;
 using System.Numerics;
 
