@@ -1,5 +1,6 @@
 using Hexa.NET.ImGui;
 using PlayerList.Utils;
+using System;
 using System.Numerics;
 
 namespace PlayerList.GUI.Tabs;
@@ -24,10 +25,31 @@ public static class ConfigTab
 
   private static void GeneralCategory()
   {
+    ChangePositionPicker();
     ToggleMenuCheckbox();
     ImGui.SameLine();
     ToggleUsernamesCheckbox();
     ChangeOpacitySlider();
+  }
+
+  private static void ChangePositionPicker()
+  {
+    var currentPosition = ConfigManager.Position.Value;
+
+    if (ImGui.BeginCombo("Position", currentPosition.ToString(), ImGuiComboFlags.None))
+    {
+      foreach (var position in Enum.GetNames(typeof(PositionEnum)))
+      {
+        var isSelected = currentPosition.ToString() == position;
+
+        if (ImGui.Selectable(position, isSelected))
+        {
+          ConfigManager.Position.Value = (PositionEnum)Enum.Parse(typeof(PositionEnum), position);
+        }
+      }
+
+      ImGui.EndCombo();
+    }
   }
 
   private static void ToggleMenuCheckbox()
