@@ -108,9 +108,9 @@ public static class ConfigTab
   {
     var currentKey = "";
     var keybind = config.Keybind;
-    if (keybind.Control) currentKey += "Ctrl +";
-    if (keybind.Shift) currentKey += "Shift +";
-    if (keybind.Alt) currentKey += "Alt +";
+    if (keybind.Control) currentKey += "Ctrl + ";
+    if (keybind.Shift) currentKey += "Shift + ";
+    if (keybind.Alt) currentKey += "Alt + ";
     currentKey += keybind.Key;
 
     ImGui.BeginGroup();
