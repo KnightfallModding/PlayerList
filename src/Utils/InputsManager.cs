@@ -1,5 +1,5 @@
 using Hexa.NET.ImGui;
-using PlayerList.Tabs;
+using PlayerList.GUI.Tabs;
 using UnityEngine;
 using System.Linq;
 

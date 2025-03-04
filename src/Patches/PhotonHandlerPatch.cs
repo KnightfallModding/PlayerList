@@ -1,6 +1,6 @@
 ﻿using HarmonyLib;
 using Photon.Pun;
-using PlayerList.Tabs;
+using PlayerList.GUI.Tabs;
 
 namespace PlayerList.Patches;
 

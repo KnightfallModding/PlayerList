@@ -3,7 +3,7 @@ using System.Linq;
 using Hexa.NET.ImGui;
 using PlayerList.Utils;
 
-namespace PlayerList.Tabs;
+namespace PlayerList.GUI.Tabs;
 
 public struct Prefixes
 {

@@ -3,7 +3,7 @@ using ClickableTransparentOverlay;
 using Hexa.NET.ImGui;
 using HexaGen.Runtime;
 using PlayerList.Skins.Default;
-using PlayerList.Tabs;
+using PlayerList.GUI.Tabs;
 using PlayerList.Utils;
 using UnityEngine;
 using System.IO;
