@@ -13,7 +13,7 @@ namespace PlayerList.GUI;
 
 public class Renderer : Overlay
 {
-  public static bool IsVisible { get; set; } = ConfigManager.EnableMenu.Value;
+  public static bool IsVisible { get; set; } = true;
 
   private float windowWidth;
   private float windowHeight;
@@ -106,10 +106,16 @@ public class Renderer : Overlay
   public static void ToggleMenu()
   {
     ConfigManager.EnableMenu.Value = !ConfigManager.EnableMenu.Value;
-    IsVisible = !ConfigManager.EnableMenu.Value;
+    IsVisible = ConfigManager.EnableMenu.Value;
 
-    if (!IsVisible) ProcessUtils.FocusGame();
+    if (!IsVisible || !ConfigManager.EnableMenu.Value) ProcessUtils.FocusGame();
   }
 
   public static void ToggleUsernames() => ConfigManager.DisplayUsernames.Value = !ConfigManager.DisplayUsernames.Value;
+
+  public static void ChangeFontSize(int fontSize)
+  {
+    ImGui.GetFont().Scale = fontSize / (float)FontsManager.DefaultFontSize;
+    ConfigManager.FontSize.Value = fontSize;
+  }
 }
