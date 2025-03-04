@@ -1,7 +1,7 @@
 using Hexa.NET.ImGui;
 using PlayerList.GUI.Tabs;
-using UnityEngine;
 using System.Linq;
+using UnityEngine;
 
 namespace PlayerList.Utils;
 
