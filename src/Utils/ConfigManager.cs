@@ -44,12 +44,23 @@ public static class ConfigManager
     Position.Value = (PositionEnum)Position.DefaultValue;
     FontSize.Value = (int)FontSize.DefaultValue;
     Opacity.Value = (float)Opacity.DefaultValue;
+
+    // Update the window's transparency
+    ImGui.GetStyle().Colors[(int)ImGuiCol.WindowBg].W = Opacity.Value;
+  }
+
+  public static void ResetKeybinds()
+  {
+    EnableMenu.Keybind.Reset();
+    DisplayUsernames.Keybind.Reset();
   }
 }
 
 public class ConfigWithKeybind<T>(ConfigFile config, string name, T value = default, bool control = false, bool shift = false, bool alt = false, ImGuiKey key = ImGuiKey.None)
 {
   private readonly ConfigEntry<T> _value = config.Bind("General", name, value);
+
+  public string Name { get => name; }
   public T DefaultValue { get => (T)_value.DefaultValue; }
   public T Value { get => _value.Value; set => _value.Value = value; }
   public Keybind Keybind { get; } = new Keybind(config, name, control, shift, alt, key);
@@ -74,4 +85,12 @@ public class Keybind(ConfigFile file, string name, bool control, bool shift, boo
   public bool Shift { get => shift.Value; set => shift.Value = value; }
   public bool Alt { get => alt.Value; set => alt.Value = value; }
   public ImGuiKey Key { get => key.Value; set => key.Value = value; }
+
+  public void Reset()
+  {
+    control.Value = (bool)control.DefaultValue;
+    shift.Value = (bool)shift.DefaultValue;
+    alt.Value = (bool)alt.DefaultValue;
+    key.Value = (ImGuiKey)key.DefaultValue;
+  }
 }

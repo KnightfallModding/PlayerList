@@ -19,6 +19,8 @@ public class FontsManager
   public static ImFontPtr ItalicFont { get; private set; }
   public static ImFontPtr BoldItalicFont { get; private set; }
   public static int DefaultFontSize { get; } = 16;
+  public static int MinFontSize { get; } = 14;
+  public static int MaxFontSize { get; } = 18;
 
   private readonly string path;
   private readonly string fontName;
