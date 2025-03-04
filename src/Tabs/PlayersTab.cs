@@ -38,7 +38,12 @@ public static class PlayersTab
 
         return;
       }
-      if (!ConfigManager.DisplayUsernames.Value) return;
+      if (!ConfigManager.DisplayUsernames.Value)
+      {
+        ImGui.EndTabItem();
+
+        return;
+      };
 
       foreach (var player in Players)
       {
