@@ -15,6 +15,9 @@ public class Renderer : Overlay
 {
   public static bool IsVisible { get; set; } = ConfigManager.EnableMenu.Value;
 
+  private float windowWidth;
+  private float windowHeight;
+
   public Renderer() : base(MyPluginInfo.PLUGIN_NAME, true, Screen.width, Screen.height)
   {
     // Avoid `cimgui.dll` not being detected
@@ -44,11 +47,13 @@ public class Renderer : Overlay
     if (!IsVisible || !ConfigManager.EnableMenu.Value) return;
 
     MoveWindow();
-    InputsManager.DetectImGuiKeybinds();
 
     ImGui.PushFont(FontsManager.RegularFont);
-    ImGui.Begin(MyPluginInfo.PLUGIN_NAME);
+    ImGui.Begin(MyPluginInfo.PLUGIN_NAME, ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoResize);
     ImGui.BeginTabBar(MyPluginInfo.PLUGIN_GUID);
+    windowWidth = ImGui.GetWindowWidth();
+    windowHeight = ImGui.GetWindowHeight();
+    InputsManager.DetectImGuiKeybinds();
     PlayersTab.Render();
     ConfigTab.Render();
     ImGui.EndTabBar();
@@ -75,8 +80,6 @@ public class Renderer : Overlay
   {
     var screenWidth = window.Dimensions.Width;
     var screenHeight = window.Dimensions.Height;
-    var windowWidth = ImGui.GetWindowWidth();
-    var windowHeight = ImGui.GetWindowHeight();
 
     switch (ConfigManager.Position.Value)
     {
@@ -93,7 +96,7 @@ public class Renderer : Overlay
         break;
 
       case PositionEnum.BottomRight:
-        ImGui.SetNextWindowPos(new(screenWidth - windowWidth, 0));
+        ImGui.SetNextWindowPos(new(screenWidth - windowWidth, screenHeight - windowHeight));
         break;
     }
   }
