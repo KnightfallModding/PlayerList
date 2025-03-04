@@ -125,7 +125,7 @@ public static class ConfigTab
   private static void AdvancedCategory()
   {
     ImGui.NewLine();
-    if (ImGui.CollapsingHeader("Advanced"))
+    if (ImGui.CollapsingHeader("⚙️Advanced"))
     {
       FontSizeSlider();
     }
