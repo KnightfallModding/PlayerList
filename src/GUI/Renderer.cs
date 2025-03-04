@@ -3,11 +3,12 @@ using ClickableTransparentOverlay;
 using Hexa.NET.ImGui;
 using HexaGen.Runtime;
 using PlayerList.GUI.Tabs;
-using PlayerList.Skins.Default;
+using PlayerList.GUI.Skins.Default;
 using PlayerList.Utils;
 using UnityEngine;
 using System.IO;
 using System.Threading.Tasks;
+using PlayerList.GUI.Skins;
 
 namespace PlayerList.GUI;
 

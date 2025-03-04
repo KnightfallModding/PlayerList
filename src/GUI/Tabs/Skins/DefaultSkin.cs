@@ -1,7 +1,7 @@
 using Hexa.NET.ImGui;
 using PlayerList.Utils;
 
-namespace PlayerList.Skins.Default;
+namespace PlayerList.GUI.Skins.Default;
 
 public static class DefaultSkin
 {
