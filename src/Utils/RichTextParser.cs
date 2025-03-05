@@ -270,7 +270,7 @@ public class MarkupParser(string input)
           return new(0.502f, 0, 0.502f, 1);
         case "red":
           return new(1, 0, 1, 1);
-        case "white":
+        default:
           return new(1, 1, 1, 1);
       }
     }
