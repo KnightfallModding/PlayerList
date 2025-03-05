@@ -1,5 +1,6 @@
 using Hexa.NET.ImGui;
 using PlayerList.Utils;
+using PlayerList.Utils.RichTextParser;
 using System.Collections.Generic;
 
 namespace PlayerList.GUI.Tabs;
@@ -13,7 +14,7 @@ public struct Prefixes
 public class PlayerDetails
 {
   public string[] Prefixes { get; set; }
-  public string Username { get; set; }
+  public List<TextSegment> Username { get; set; }
   public string[] Postfixes { get; set; }
   public int LocalId { get; set; }
 
@@ -88,12 +89,14 @@ public static class PlayersTab
     }
     catch { }
 
+    MarkupParser markupParser = new(UUID != null ? GetUsername(player, UUID) : player.NickName);
+
     PlayerDetails details = new()
     {
       LocalId = player.ActorNumber,
       UUID = UUID,
       Prefixes = UUID != null ? GetPrefixes(UUID) : [],
-      Username = UUID != null ? GetUsername(player, UUID) : player.NickName,
+      Username = markupParser.Parse(),
       Postfixes = UUID != null ? GetPostfixes(UUID) : [],
     };
     Players.Add(details);
