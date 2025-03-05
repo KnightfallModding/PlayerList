@@ -2,6 +2,7 @@ using Hexa.NET.ImGui;
 using PlayerList.Utils;
 using PlayerList.Utils.RichTextParser;
 using System.Collections.Generic;
+using System.Numerics;
 
 namespace PlayerList.GUI.Tabs;
 
@@ -43,18 +44,43 @@ public static class PlayersTab
         ImGui.EndTabItem();
 
         return;
-      };
+      }
 
       foreach (var player in Players)
       {
-        var prefixes = player.Prefixes.Length > 0 ? $"[{string.Join("][", player.Prefixes)}] " : "";
-        var postfixes = player.Prefixes.Length > 0 ? $" [{string.Join("][", player.Postfixes)}]" : "";
+        var prefixes = player.Prefixes.Length > 0 ? $"[{string.Join("][", player.Prefixes)}]" : "";
+        var postfixes = player.Prefixes.Length > 0 ? $"[{string.Join("][", player.Postfixes)}]" : "";
 
         ImGui.AlignTextToFramePadding();
-        ImGui.Text(prefixes + player.Username + postfixes);
+        ImGui.Text(prefixes);
+        ImGui.SameLine();
+        DisplayUsername(player.Username);
+        ImGui.Text(postfixes);
+        ImGui.SameLine();
       }
 
       ImGui.EndTabItem();
+    }
+  }
+
+  private static void DisplayUsername(List<TextSegment> usernameSegments)
+  {
+    foreach (var segment in usernameSegments)
+    {
+      var font = FontsManager.RegularFont;
+
+      if (segment.Bold) font = FontsManager.BoldFont;
+      if (segment.Bold && segment.Italic) font = FontsManager.BoldItalicFont;
+      if (segment.Italic) font = FontsManager.ItalicFont;
+
+      ImGui.PushFont(font);
+
+      // TODO: Implement sprite to emoji
+
+      if (segment.Color != default) ImGui.TextColored((Vector4)segment.Color, segment.Content);
+      else ImGui.TextUnformatted(segment.Content);
+
+      ImGui.PopFont();
     }
   }
 
@@ -89,15 +115,15 @@ public static class PlayersTab
     }
     catch { }
 
-    MarkupParser markupParser = new(UUID != null ? GetUsername(player, UUID) : player.NickName);
+    MarkupParser markupParser = new(GetUsername(player, UUID));
 
     PlayerDetails details = new()
     {
       LocalId = player.ActorNumber,
       UUID = UUID,
-      Prefixes = UUID != null ? GetPrefixes(UUID) : [],
+      Prefixes = GetPrefixes(UUID),
       Username = markupParser.Parse(),
-      Postfixes = UUID != null ? GetPostfixes(UUID) : [],
+      Postfixes = GetPostfixes(UUID),
     };
     Players.Add(details);
   }

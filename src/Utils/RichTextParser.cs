@@ -1,9 +1,9 @@
+using Hexa.NET.ImGui;
+using Microsoft.VisualBasic;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
-using System.Text.RegularExpressions;
-using Hexa.NET.ImGui;
 
 namespace PlayerList.Utils.RichTextParser;
 
@@ -14,7 +14,7 @@ public class TextSegment
   public bool Italic { get; set; }
   public bool Underline { get; set; }
   public bool Strikethrough { get; set; }
-  public Vector4 Color { get; set; } // e.g. "#FF0000" or "red"
+  public Vector4? Color { get; set; } // e.g. "#FF0000" or "red"
   public string Size { get; set; } // e.g. "20" or "small"
   public string Mark { get; set; } // e.g. a highlight color
   public string Align { get; set; } // e.g. "left", "center", etc.
@@ -72,6 +72,7 @@ public class MarkupParser(string input)
   {
     var defaultStyle = new TextStyle();
     ParseInternal(defaultStyle);
+
     return segments;
   }
 
@@ -95,10 +96,10 @@ public class MarkupParser(string input)
         if (pos + 1 < input.Length && input[pos + 1] == '/')
         {
           pos = input.IndexOf('>', pos);
-          if (pos == -1)
-            pos = input.Length;
-          else
-            pos++; // Skip '>'
+
+          if (pos == -1) pos = input.Length;
+          else pos++; // Skip '>'
+
           return; // End of current tag's inner content.
         }
         else
@@ -251,35 +252,41 @@ public class MarkupParser(string input)
 
   public static Vector4 ParseColor(string color)
   {
+    Plugin.Log.LogInfo(color);
+
     if (color.StartsWith("#"))
-      color = color[1..];
+    {
+      var parsedColor = Convert.FromHexString(color[1..]);
+
+      return new(
+        parsedColor[0] / 255f,
+        parsedColor[1] / 255f,
+        parsedColor[2] / 255f,
+        1
+      );
+    }
 
     if (color.Length != 6)
     {
-      switch (color)
+      return color switch
       {
-        case "black":
-          return new(0, 0, 0, 1);
-        case "blue":
-          return new(0, 0, 1, 1);
-        case "green":
-          return new(0, 1, 0, 1);
-        case "orange":
-          return new(1, 0.647f, 1, 1);
-        case "purple":
-          return new(0.502f, 0, 0.502f, 1);
-        case "red":
-          return new(1, 0, 1, 1);
-        default:
-          return new(1, 1, 1, 1);
-      }
+        "black" => new(0, 0, 0, 1),
+        "blue" => new(0, 0, 1, 1),
+        "green" => new(0, 1, 0, 1),
+        "orange" => new(1, 0.647f, 1, 1),
+        "purple" => new(0.502f, 0, 0.502f, 1),
+        "red" => new(1, 0, 1, 1),
+        _ => new(1, 1, 1, 1),
+      };
     }
 
     var r = Convert.ToInt32(color[..2], 16) / 255f;
     var g = Convert.ToInt32(color.Substring(2, 2), 16) / 255f;
     var b = Convert.ToInt32(color.Substring(4, 2), 16) / 255f;
 
-    return new Vector4(r, g, b, 1);
+    Plugin.Log.LogInfo((r, g, b));
+
+    return new(r, g, b, 1);
   }
 
   public static void RenderRichText(List<TextSegment> segments, ImFontPtr regularFont, ImFontPtr boldFont, ImFontPtr italicFont, ImFontPtr boldItalicFont)
