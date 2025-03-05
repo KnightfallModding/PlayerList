@@ -8,7 +8,6 @@ using PlayerList.Utils;
 using UnityEngine;
 using System.IO;
 using System.Threading.Tasks;
-using PlayerList.GUI.Skins;
 
 namespace PlayerList.GUI;
 
@@ -52,8 +51,10 @@ public class Renderer : Overlay
     ImGui.PushFont(FontsManager.RegularFont);
     ImGui.Begin(MyPluginInfo.PLUGIN_NAME, ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoNav);
     ImGui.BeginTabBar(MyPluginInfo.PLUGIN_GUID);
+
     windowWidth = ImGui.GetWindowWidth();
     windowHeight = ImGui.GetWindowHeight();
+
     InputsManager.DetectImGuiKeybinds();
     PlayersTab.Render();
     ConfigTab.Render();
