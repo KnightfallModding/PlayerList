@@ -1,8 +1,6 @@
 using Hexa.NET.ImGui;
 using PlayerList.Utils;
-using PlayerList.Utils.RichTextParser;
 using System.Collections.Generic;
-using System.Numerics;
 
 namespace PlayerList.GUI.Tabs;
 
@@ -48,15 +46,15 @@ public static class PlayersTab
 
       foreach (var player in Players)
       {
-        var prefixes = player.Prefixes.Length > 0 ? $"[{string.Join("][", player.Prefixes)}]" : "";
-        var postfixes = player.Prefixes.Length > 0 ? $"[{string.Join("][", player.Postfixes)}]" : "";
+        var prefixes = player.Prefixes.Length > 0 ? $"[{string.Join("][", player.Prefixes)}] " : "";
+        var postfixes = player.Prefixes.Length > 0 ? $" [{string.Join("][", player.Postfixes)}]" : "";
 
         ImGui.AlignTextToFramePadding();
         ImGui.Text(prefixes);
-        ImGui.SameLine();
+        ImGui.SameLine(0, 0);
         DisplayUsername(player.Username);
+        ImGui.SameLine(0, 0);
         ImGui.Text(postfixes);
-        ImGui.SameLine();
       }
 
       ImGui.EndTabItem();
@@ -77,8 +75,8 @@ public static class PlayersTab
 
       // TODO: Implement sprite to emoji
 
-      if (segment.Color != default) ImGui.TextColored((Vector4)segment.Color, segment.Content);
-      else ImGui.TextUnformatted(segment.Content);
+      if (segment.Color != default) ImGui.TextColored(segment.Color, segment.Text);
+      else ImGui.TextUnformatted(segment.Text);
 
       ImGui.PopFont();
     }
@@ -115,7 +113,7 @@ public static class PlayersTab
     }
     catch { }
 
-    MarkupParser markupParser = new(GetUsername(player, UUID));
+    XMLParser markupParser = new(GetUsername(player, UUID));
 
     PlayerDetails details = new()
     {
