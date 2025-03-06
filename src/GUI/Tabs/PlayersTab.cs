@@ -47,7 +47,7 @@ public static class PlayersTab
       foreach (var player in Players)
       {
         var prefixes = player.Prefixes.Length > 0 ? $"[{string.Join("][", player.Prefixes)}] " : "";
-        var postfixes = player.Prefixes.Length > 0 ? $" [{string.Join("][", player.Postfixes)}]" : "";
+        var postfixes = player.Postfixes.Length > 0 ? $" [{string.Join("][", player.Postfixes)}]" : "";
 
         ImGui.AlignTextToFramePadding();
         ImGui.Text(prefixes);
@@ -75,6 +75,7 @@ public static class PlayersTab
 
       // TODO: Implement sprite to emoji
 
+      ImGui.SameLine(0, 0);
       if (segment.Color != default) ImGui.TextColored(segment.Color, segment.Text);
       else ImGui.TextUnformatted(segment.Text);
 
