@@ -69,9 +69,9 @@ public class Renderer : Overlay
     ProcessUtils.HideOverlayFromTaskbar();
 
     // TODO: Improve visibility detection instead of just focus.
-    ProcessUtils.GameFocusChanged += (sender, @event) =>
+    ProcessUtils.GameFocusChanged += (_, @event) =>
     {
-      Plugin.Log.LogInfo($"Window fcocus changed: {@event.IsFocused}. Sender: {sender}");
+      Plugin.Log.LogInfo($"Window focus changed: {@event.IsFocused}.");
 
       CursorUnlocker.IsCursorUnlocked = @event.FocusedWindow == FocusedWindow.Overlay;
       IsVisible = @event.IsFocused;
