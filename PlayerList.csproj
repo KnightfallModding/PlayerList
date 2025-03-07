@@ -119,12 +119,10 @@
     <Copy SourceFiles="@(RuntimeDlls)" DestinationFolder="$(PluginPath)/runtime" />
 
     <!-- Copy asset files (preserving folder structure relative to assets/) -->
-    <Copy SourceFiles="@(AssetFiles)"
-      DestinationFiles="@(AssetFiles->'$(PluginPath)/assets/%(RecursiveDir)%(Filename)%(Extension)')" />
+    <Copy SourceFiles="@(AssetFiles)" DestinationFiles="@(AssetFiles->'$(PluginPath)/assets/%(RecursiveDir)%(Filename)%(Extension)')" />
 
     <!-- Copy main plugin DLL (assumes output is in release/$(TargetFramework)/) -->
-    <Copy SourceFiles="release/$(TargetFramework)/$(AssemblyName).dll"
-      DestinationFolder="$(PluginPath)" />
+    <Copy SourceFiles="release/$(TargetFramework)/$(AssemblyName).dll" DestinationFolder="$(PluginPath)" />
 
     <!-- Launch the game -->
     <Exec Command="$(GameDir)/Knightfall.exe" />
