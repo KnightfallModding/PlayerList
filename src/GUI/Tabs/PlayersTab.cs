@@ -25,6 +25,7 @@ public class PlayerDetails
 public static class PlayersTab
 {
   public static List<PlayerDetails> Players { get; private set; } = [];
+  public static List<APIPlayer> CustomPlayers { get; set; }
 
   public static void Render()
   {
@@ -83,39 +84,17 @@ public static class PlayersTab
     }
   }
 
-  // TODO: Fetch prefixes, usernames and postfixes from an API
-  public static string[] GetPrefixes(string UUID) => UUID switch
-  {
-    "aeryle" => [Prefixes.Creator],
-    "t1nquen#goat" => [Prefixes.T1nquen],
-    _ => [],
-  };
-  public static string GetUsername(Photon.Realtime.Player player, string UUID)
-  {
-    return UUID switch
-    {
-      "souptis" => $"<color=#D3F5F5>{player.NickName}</color>",
-      _ => player.NickName,
-    };
-  }
-  public static string[] GetPostfixes(string UUID) => UUID switch
-  {
-    _ => [],
-  };
+  public static string[] GetPrefixes(string UUID) => CustomPlayers.Find(player => player.UUID == UUID)?.prefixes ?? [];
+  public static string GetUsername(Photon.Realtime.Player player, string UUID) => CustomPlayers.Find(player => player.UUID == UUID)?.username?.Replace("{nickname}", player.NickName) ?? player.NickName;
+  public static string[] GetPostfixes(string UUID) => CustomPlayers.Find(player => player.UUID == UUID)?.postfixes ?? [];
 
   public static void Add(Photon.Realtime.Player player)
   {
-#nullable enable
-    string? UUID = null;
-#nullable disable
-    try
-    {
-      UUID = player.CustomProperties["UUID"].ToString().ToLower();
-    }
+    var UUID = default(string);
+    try { UUID = player.CustomProperties["UUID"].ToString().ToLower(); }
     catch { }
 
     XMLParser markupParser = new(GetUsername(player, UUID));
-
     PlayerDetails details = new()
     {
       LocalId = player.ActorNumber,
