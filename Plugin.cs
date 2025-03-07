@@ -2,7 +2,9 @@
 using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP;
 using HarmonyLib;
+using Il2CppSystem.Runtime.InteropServices;
 using PlayerList.GUI;
+using PlayerList.GUI.Tabs;
 using PlayerList.Patches;
 using PlayerList.Utils;
 using System.Diagnostics;
@@ -15,7 +17,7 @@ public class Plugin : BasePlugin
 {
   internal static new ManualLogSource Log;
 
-  public override void Load()
+  public override async void Load()
   {
     // Plugin startup logic
     Log = base.Log;
@@ -27,8 +29,13 @@ public class Plugin : BasePlugin
     ProcessUtils.GameWindowHandle = ProcessUtils.FindWindow(null, "Knightfall");
     ConfigManager.Setup();
 
+    try
+    { PlayersTab.CustomPlayers = await API.FetchCustomPlayers(); }
+    catch
+    { PlayersTab.CustomPlayers = []; }
+
     var renderer = new Renderer();
-    Task.Run(renderer.Run);
+    _ = Task.Run(renderer.Run);
 
     Harmony.CreateAndPatchAll(typeof(PhotonHandlerPatch));
     Harmony.CreateAndPatchAll(typeof(PhotonNetworkPatch));
