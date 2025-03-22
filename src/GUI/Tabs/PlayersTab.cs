@@ -1,6 +1,8 @@
-using Hexa.NET.ImGui;
-using PlayerList.Utils;
 using System.Collections.Generic;
+
+using Hexa.NET.ImGui;
+
+using PlayerList.Utils;
 
 namespace PlayerList.GUI.Tabs;
 
@@ -10,7 +12,7 @@ public struct Prefixes
   public const string T1nquen = "🤡";
 }
 
-public class PlayerDetails
+internal class PlayerDetails
 {
   public string[] Prefixes { get; set; }
   public List<TextSegment> Username { get; set; }
@@ -22,7 +24,7 @@ public class PlayerDetails
 #nullable disable
 }
 
-public static class PlayersTab
+internal static class PlayersTab
 {
   public static List<PlayerDetails> Players { get; private set; } = [];
   public static List<APIPlayer> CustomPlayers { get; set; }
@@ -45,10 +47,10 @@ public static class PlayersTab
         return;
       }
 
-      foreach (var player in Players)
+      foreach (PlayerDetails player in Players)
       {
-        var prefixes = player.Prefixes.Length > 0 ? $"[{string.Join("][", player.Prefixes)}] " : "";
-        var postfixes = player.Postfixes.Length > 0 ? $" [{string.Join("][", player.Postfixes)}]" : "";
+        string prefixes = (player.Prefixes.Length > 0) ? $"[{string.Join("][", player.Prefixes)}] " : "";
+        string postfixes = (player.Postfixes.Length > 0) ? $" [{string.Join("][", player.Postfixes)}]" : "";
 
         ImGui.AlignTextToFramePadding();
         ImGui.Text(prefixes);
@@ -64,38 +66,56 @@ public static class PlayersTab
 
   private static void DisplayUsername(List<TextSegment> usernameSegments)
   {
-    foreach (var segment in usernameSegments)
+    foreach (TextSegment segment in usernameSegments)
     {
-      var font = FontsManager.RegularFont;
+      ImFontPtr font = FontsManager.RegularFont;
 
-      if (segment.Bold) font = FontsManager.BoldFont;
-      if (segment.Bold && segment.Italic) font = FontsManager.BoldItalicFont;
-      if (segment.Italic) font = FontsManager.ItalicFont;
+      if (segment.Bold)
+        font = FontsManager.BoldFont;
+
+      if (segment.Bold && segment.Italic)
+        font = FontsManager.BoldItalicFont;
+
+      if (segment.Italic)
+        font = FontsManager.ItalicFont;
 
       ImGui.PushFont(font);
 
       // TODO: Implement sprite to emoji
 
       ImGui.SameLine(0, 0);
-      if (segment.Color != default) ImGui.TextColored(segment.Color, segment.Text);
-      else ImGui.TextUnformatted(segment.Text);
+      if (segment.Color != default)
+      {
+        ImGui.TextColored(segment.Color, segment.Text);
+      }
+      else
+      {
+        ImGui.TextUnformatted(segment.Text);
+      }
 
       ImGui.PopFont();
     }
   }
 
-  public static string[] GetPrefixes(string UUID) => CustomPlayers.Find(player => player.UUID == UUID)?.prefixes ?? [];
-  public static string GetUsername(Photon.Realtime.Player player, string UUID) => CustomPlayers.Find(player => player.UUID == UUID)?.username?.Replace("{nickname}", player.NickName) ?? player.NickName;
-  public static string[] GetPostfixes(string UUID) => CustomPlayers.Find(player => player.UUID == UUID)?.postfixes ?? [];
+  public static string[] GetPrefixes(string UUID)
+  {
+    string[] value = [];
+    return CustomPlayers.Find(player => player.UUID == UUID)?.Prefixes ?? value;
+  }
+  public static string GetUsername(Photon.Realtime.Player player, string UUID) => CustomPlayers.Find(player => player.UUID == UUID)?.Username?.Replace("{nickname}", player.NickName) ?? player.NickName;
+  public static string[] GetPostfixes(string UUID) => CustomPlayers.Find(player => player.UUID == UUID)?.Suffixes ?? System.Array.Empty<string>();
 
   public static void Add(Photon.Realtime.Player player)
   {
     var UUID = default(string);
-    try { UUID = player.CustomProperties["UUID"].ToString().ToLower(); }
+    try
+    {
+      UUID = player.CustomProperties["UUID"].ToString().ToLower();
+    }
     catch { }
 
-    XMLParser markupParser = new(GetUsername(player, UUID));
-    PlayerDetails details = new()
+    var markupParser = new XMLParser(GetUsername(player, UUID));
+    var details = new PlayerDetails()
     {
       LocalId = player.ActorNumber,
       UUID = UUID,
@@ -106,5 +126,5 @@ public static class PlayersTab
     Players.Add(details);
   }
 
-  public static void Clear() => Players = [];
+  public static void Clear() => Players = new List<PlayerDetails>();
 }

@@ -7,46 +7,55 @@ namespace PlayerList.Utils;
 
 public enum FocusedWindow
 {
-  None,
-  Game,
-  Overlay
+  None = 0,
+  Game = 1,
+  Overlay = 2,
 }
 
-// EventArgs class for focus changes.
-public class FocusChangedEventArgs(bool isFocused, FocusedWindow focusedWindow) : EventArgs
+/// <summary>
+/// EventArgs class for focus changes.
+/// </summary>
+/// <param name="isFocused"></param>
+/// <param name="focusedWindow"></param>
+internal class FocusChangedEventArgs(bool isFocused, FocusedWindow focusedWindow) : EventArgs
 {
   public bool IsFocused { get; } = isFocused;
   public FocusedWindow FocusedWindow { get; } = focusedWindow;
 }
 
-// EventArgs class for visibility changes.
-public class VisibilityChangedEventArgs(bool isVisible) : EventArgs
+/// <summary>
+/// EventArgs class for visibility changes.
+/// </summary>
+/// <param name="isVisible"></param>
+internal class VisibilityChangedEventArgs(bool isVisible) : EventArgs
 {
   public bool IsVisible { get; } = isVisible;
 }
 
-public static class ProcessUtils
+internal static class ProcessUtils
 {
-  // Source: http://www.pinvoke.net/default.aspx/Enums/SHOWWINDOW_FLAGS.html
+  /// <summary>
+  /// Source: http://www.pinvoke.net/default.aspx/Enums/SHOWWINDOW_FLAGS.html
+  /// </summary>
   public enum ShowWindowCommands : uint
 
 #pragma warning disable CA1069, RCS1234
   {
-    SW_HIDE = 0,
-    SW_SHOWNORMAL = 1,
-    SW_NORMAL = 1,
-    SW_SHOWMINIMIZED = 2,
-    SW_SHOWMAXIMIZED = 3,
-    SW_MAXIMIZE = 3,
-    SW_SHOWNOACTIVATE = 4,
-    SW_SHOW = 5,
-    SW_MINIMIZE = 6,
-    SW_SHOWMINNOACTIVE = 7,
-    SW_SHOWNA = 8,
-    SW_RESTORE = 9,
-    SW_SHOWDEFAULT = 10,
-    SW_FORCEMINIMIZE = 11,
-    SW_MAX = 11
+    SWHIDE = 0,
+    SWSHOWNORMAL = 1,
+    SWNORMAL = 1,
+    SWSHOWMINIMIZED = 2,
+    SWSHOWMAXIMIZED = 3,
+    SWMAXIMIZE = 3,
+    SWSHOWNOACTIVATE = 4,
+    SWSHOW = 5,
+    SWMINIMIZE = 6,
+    SWSHOWMINNOACTIVE = 7,
+    SWSHOWNA = 8,
+    SWRESTORE = 9,
+    SWSHOWDEFAULT = 10,
+    SWFORCEMINIMIZE = 11,
+    SWMAX = 11,
   }
 #pragma warning restore RCS1234, CA1069
 
@@ -61,11 +70,16 @@ public static class ProcessUtils
   public static extern IntPtr FindWindow(string lpclassname, string lpwindowname);
 #pragma warning restore CA1401
 
-  // Used for checking focus.
+  /// <summary>
+  /// Used for checking focus.
+  /// </summary>
   [DllImport("user32.dll")]
   private static extern IntPtr GetForegroundWindow();
 
-  // Used for checking window visibility.
+  /// <summary>
+  /// Used for checking window visibility.
+  /// </summary>
+  /// <param name="hWnd"></param>
   [DllImport("user32.dll")]
   [return: MarshalAs(UnmanagedType.Bool)]
   private static extern bool IsWindowVisible(IntPtr hWnd);
@@ -76,13 +90,13 @@ public static class ProcessUtils
 #pragma warning disable RCS1135
   public enum ExtendedWindowStyles
   {
-    WSEXTOOLWINDOW = 1 << 7,
+    WSEXTOOLWINDOW = 1 << 7
   }
 #pragma warning restore RCS1135
 
   public enum GetWindowLongFields
   {
-    GWLEXSTYLE = (-20),
+    GWLEXSTYLE = (-20)
   }
 
   [DllImport("user32.dll")]
@@ -100,7 +114,7 @@ public static class ProcessUtils
     if (IntPtr.Size == 4)
     {
       // use SetWindowLong
-      var tempResult = IntSetWindowLong(hWnd, nIndex, IntPtrToInt32(dwNewLong));
+      int tempResult = IntSetWindowLong(hWnd, nIndex, IntPtrToInt32(dwNewLong));
       error = Marshal.GetLastWin32Error();
       result = new IntPtr(tempResult);
     }
@@ -112,9 +126,7 @@ public static class ProcessUtils
     }
 
     if ((result == IntPtr.Zero) && (error != 0))
-    {
       throw new System.ComponentModel.Win32Exception(error);
-    }
 
     return result;
   }
@@ -132,7 +144,7 @@ public static class ProcessUtils
 
   [DllImport("kernel32.dll", EntryPoint = "SetLastError")]
   private static extern void SetLastError(int dwerrorcode);
-  #endregion
+  #endregion Window styles
 
   public static Process Process { get; set; }
   public static IntPtr GameWindowHandle { get; set; }
@@ -142,19 +154,19 @@ public static class ProcessUtils
   {
     var exStyle = (int)GetWindowLong(OverlayWindowHandle, (int)GetWindowLongFields.GWLEXSTYLE);
     exStyle |= (int)ExtendedWindowStyles.WSEXTOOLWINDOW;
-    SetWindowLong(OverlayWindowHandle, (int)GetWindowLongFields.GWLEXSTYLE, (IntPtr)exStyle);
+    _ = SetWindowLong(OverlayWindowHandle, (int)GetWindowLongFields.GWLEXSTYLE, (IntPtr)exStyle);
   }
 
   public static void FocusGame()
   {
-    SetForegroundWindow(GameWindowHandle);
-    ShowWindow(GameWindowHandle, (int)ShowWindowCommands.SW_SHOW);
+    _ = SetForegroundWindow(GameWindowHandle);
+    _ = ShowWindow(GameWindowHandle, (int)ShowWindowCommands.SWSHOW);
   }
 
   public static void FocusOverlay()
   {
-    SetForegroundWindow(OverlayWindowHandle);
-    ShowWindow(OverlayWindowHandle, (int)ShowWindowCommands.SW_SHOW);
+    _ = SetForegroundWindow(OverlayWindowHandle);
+    _ = ShowWindow(OverlayWindowHandle, (int)ShowWindowCommands.SWSHOW);
   }
 
   // --- New events for monitoring window focus and visibility ---
@@ -171,13 +183,17 @@ public static class ProcessUtils
   /// </summary>
   public static event EventHandler<VisibilityChangedEventArgs> GameVisibilityChanged;
 
-  // Internal state to avoid firing duplicate events.
+  /// <summary>
+  /// Internal state to avoid firing duplicate events.
+  /// </summary>
   private static bool s_wasGameFocused = true;
   private static bool s_wasGameVisible = true;
-  public static Timer S_monitorTimer { get; set; }
+  public static Timer MonitorTimer { get; set; }
   private static bool s_monitoringStarted;
 
-  // Start monitoring automatically in the static constructor.
+  /// <summary>
+  /// Start monitoring automatically in the static constructor.
+  /// </summary>
   static ProcessUtils()
   {
     StartMonitoring();
@@ -192,15 +208,14 @@ public static class ProcessUtils
     {
       s_monitoringStarted = true;
       // Check every 100 milliseconds. Adjust interval as needed.
-      S_monitorTimer = new Timer(CheckGameWindowState, null, 0, 100);
+      MonitorTimer = new Timer(static _ => CheckGameWindowState(), null, 0, 100);
     }
   }
 
   /// <summary>
   /// Checks the current state of the game window and fires events on state changes.
   /// </summary>
-  /// <param name="state">Unused state object.</param>
-  private static void CheckGameWindowState(object state)
+  private static void CheckGameWindowState()
   {
     if (GameWindowHandle == IntPtr.Zero)
     {
@@ -209,18 +224,22 @@ public static class ProcessUtils
     }
 
     // Check focus.
-    var foreground = GetForegroundWindow();
-    var isFocused = foreground == OverlayWindowHandle || foreground == GameWindowHandle;
+    IntPtr foreground = GetForegroundWindow();
+    bool isFocused = foreground == OverlayWindowHandle || foreground == GameWindowHandle;
 
     // Determine which window is focused.
     var focusedWindow = FocusedWindow.None;
     if (foreground == GameWindowHandle)
+    {
       focusedWindow = FocusedWindow.Game;
+    }
     else if (foreground == OverlayWindowHandle)
+    {
       focusedWindow = FocusedWindow.Overlay;
+    }
 
     // Check visibility.
-    var isVisible = IsWindowVisible(GameWindowHandle);
+    bool isVisible = IsWindowVisible(GameWindowHandle);
 
     // Fire focus event if state changed.
     if (isFocused != s_wasGameFocused)
@@ -241,9 +260,10 @@ public static class ProcessUtils
   /// Focuses the specified window (Game or Overlay).
   /// </summary>
   /// <param name="window">The window to focus: Game or Overlay.</param>
+  /// <exception cref="NotImplementedException"></exception>
   public static void FocusWindow(FocusedWindow window)
   {
-    var targetHandle = window switch
+    IntPtr targetHandle = window switch
     {
       FocusedWindow.Game => GameWindowHandle,
       FocusedWindow.Overlay => OverlayWindowHandle,
@@ -256,7 +276,7 @@ public static class ProcessUtils
       return;
     }
 
-    SetForegroundWindow(targetHandle);
-    ShowWindow(targetHandle, (int)ShowWindowCommands.SW_SHOW);
+    _ = SetForegroundWindow(targetHandle);
+    _ = ShowWindow(targetHandle, (int)ShowWindowCommands.SWSHOW);
   }
 }

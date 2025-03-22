@@ -5,15 +5,15 @@ using System.Threading.Tasks;
 
 namespace PlayerList.Utils;
 
-public class APIPlayer(string UUID, string[] prefixes, string username, string[] postfixes)
+internal class APIPlayer(string UUID, string[] prefixes, string username, string[] postfixes)
 {
   public string UUID { get; } = UUID;
-  public string[] prefixes { get; } = prefixes;
-  public string username { get; } = username;
-  public string[] postfixes { get; } = postfixes;
+  public string[] Prefixes { get; } = prefixes;
+  public string Username { get; } = username;
+  public string[] Suffixes { get; } = postfixes;
 }
 
-public static class API
+internal static class API
 {
   public static async Task<List<APIPlayer>> FetchCustomPlayers()
   {

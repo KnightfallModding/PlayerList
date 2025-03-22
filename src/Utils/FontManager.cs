@@ -1,18 +1,19 @@
+using System.IO;
+
 using Hexa.NET.ImGui;
 using Hexa.NET.ImGui.Utilities;
-using System.IO;
 
 namespace PlayerList.Utils;
 
 public enum FontWeight
 {
-  Regular,
-  Bold,
-  Italic,
-  BoldItalic
+  Regular = 0,
+  Bold = 1,
+  Italic = 2,
+  BoldItalic = 3,
 }
 
-public class FontsManager
+internal class FontsManager
 {
   public static ImFontPtr RegularFont { get; private set; }
   public static ImFontPtr BoldFont { get; private set; }
@@ -40,25 +41,25 @@ public class FontsManager
 
   private ImFontPtr LoadFont(FontWeight weight)
   {
-    new ImGuiFontBuilder()
-    .AddDefaultFont()
-    .SetOption(cfg =>
-    {
-      cfg.MergeMode = false;
-      cfg.OversampleH = 1;
-      cfg.OversampleV = 1;
-      cfg.PixelSnapH = true;
-      cfg.FontBuilderFlags |= (uint)ImGuiFreeTypeBuilderFlags.LoadColor;
-    })
-    .AddFontFromFileTTF(Path.Combine(path, $"{fontName}-{weight}.ttf"), DefaultFontSize, [0x1, 0x1FFFF])
-    .Build();
+    _ = new ImGuiFontBuilder()
+      .AddDefaultFont()
+      .SetOption(static cfg =>
+      {
+        cfg.MergeMode = false;
+        cfg.OversampleH = 1;
+        cfg.OversampleV = 1;
+        cfg.PixelSnapH = true;
+        cfg.FontBuilderFlags |= (uint)ImGuiFreeTypeBuilderFlags.LoadColor;
+      })
+      .AddFontFromFileTTF(Path.Combine(path, $"{fontName}-{weight}.ttf"), DefaultFontSize, [0x1, 0x1FFFF])
+      .Build();
 
     return LoadEmojisFont();
   }
 
   private ImFontPtr LoadEmojisFont()
   {
-    return new ImGuiFontBuilder().SetOption(cfg =>
+    return new ImGuiFontBuilder().SetOption(static cfg =>
     {
       cfg.MergeMode = true;
       cfg.OversampleH = 1;
@@ -66,7 +67,7 @@ public class FontsManager
       cfg.PixelSnapH = true;
       cfg.FontBuilderFlags |= (uint)ImGuiFreeTypeBuilderFlags.LoadColor;
     })
-    .AddFontFromFileTTF(Path.Combine(path, $"{emojisFontName}.ttf"), DefaultFontSize, [0x1, 0x1FFFF])
-    .Build();
+      .AddFontFromFileTTF(Path.Combine(path, $"{emojisFontName}.ttf"), DefaultFontSize, [0x1, 0x1FFFF])
+      .Build();
   }
 }

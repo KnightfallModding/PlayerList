@@ -1,12 +1,15 @@
-using Hexa.NET.ImGui;
-using PlayerList.GUI.Tabs;
-using Renderer = PlayerList.GUI.Renderer;
 using System.Linq;
+
+using Hexa.NET.ImGui;
+
+using PlayerList.GUI.Tabs;
+
 using UnityEngine;
+using Renderer = PlayerList.GUI.Renderer;
 
 namespace PlayerList.Utils;
 
-class InputsManager : MonoBehaviour
+internal class InputsManager : MonoBehaviour
 {
   private static readonly ImGuiKey[] BlacklistedKeys =
 [
@@ -39,27 +42,24 @@ class InputsManager : MonoBehaviour
     ImGuiKey.PrintScreen,
   ];
 
-  private void Update()
-  {
-    if (Input.GetKeyDown(KeyMapper.ConvertImGuiToUnity(ConfigManager.EnableMenu.Keybind.Key)) && !ShouldCancel(ConfigManager.EnableMenu.Keybind))
-      Renderer.ToggleMenu();
-
-    if (Input.GetKeyDown(KeyMapper.ConvertImGuiToUnity(ConfigManager.DisplayUsernames.Keybind.Key)) && !ShouldCancel(ConfigManager.DisplayUsernames.Keybind))
-      Renderer.ToggleUsernames();
-  }
-
   private static bool ShouldCancel(Keybind hotkey, bool isImGui = false)
   {
     // If setting keybinds, just cancel directly no matter what
-    if (ConfigTab.CurrentlySettingKeybind != null) return true;
+    if (ConfigTab.CurrentlySettingKeybind is not null)
+      return true;
 
-    var controlPressed = isImGui ? ImGuiP.IsKeyPressed(ImGuiKey.ModCtrl) : Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
-    var shiftPressed = isImGui ? ImGuiP.IsKeyPressed(ImGuiKey.ModShift) : Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
-    var altPressed = isImGui ? ImGuiP.IsKeyPressed(ImGuiKey.ModAlt) : Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt);
+    bool controlPressed = isImGui ? ImGuiP.IsKeyPressed(ImGuiKey.ModCtrl) : Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
+    bool shiftPressed = isImGui ? ImGuiP.IsKeyPressed(ImGuiKey.ModShift) : Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+    bool altPressed = isImGui ? ImGuiP.IsKeyPressed(ImGuiKey.ModAlt) : Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt);
 
-    if (!controlPressed && hotkey.Control) return true;
-    if (!shiftPressed && hotkey.Shift) return true;
-    if (!altPressed && hotkey.Alt) return true;
+    if (!controlPressed && hotkey.Control)
+      return true;
+
+    if (!shiftPressed && hotkey.Shift)
+      return true;
+
+    if (!altPressed && hotkey.Alt)
+      return true;
 
     return false;
   }
@@ -68,16 +68,28 @@ class InputsManager : MonoBehaviour
   {
     if (ImGuiP.IsKeyPressed(ConfigManager.EnableMenu.Keybind.Key) && !ShouldCancel(ConfigManager.EnableMenu.Keybind, true))
     {
-      if (ConfigManager.EnableMenu.Value) ProcessUtils.FocusGame();
-      else ProcessUtils.FocusOverlay();
+      if (ConfigManager.EnableMenu.Value)
+      {
+        ProcessUtils.FocusGame();
+      }
+      else
+      {
+        ProcessUtils.FocusOverlay();
+      }
 
       Renderer.ToggleMenu();
     }
 
     if (ImGuiP.IsKeyPressed(ConfigManager.DisplayUsernames.Keybind.Key) && !ShouldCancel(ConfigManager.DisplayUsernames.Keybind, true))
     {
-      if (ConfigManager.EnableMenu.Value) ProcessUtils.FocusGame();
-      else ProcessUtils.FocusOverlay();
+      if (ConfigManager.EnableMenu.Value)
+      {
+        ProcessUtils.FocusGame();
+      }
+      else
+      {
+        ProcessUtils.FocusOverlay();
+      }
 
       ConfigManager.DisplayUsernames.Value = !ConfigManager.DisplayUsernames.Value;
     }
@@ -87,9 +99,14 @@ class InputsManager : MonoBehaviour
   {
     for (var eventKey = ImGuiKey.NamedKeyBegin; eventKey < ImGuiKey.NamedKeyEnd; eventKey++)
     {
-      if (!ImGuiP.IsKeyDown(eventKey)) continue;
-      if (eventKey == ImGuiKey.Escape) continue;
-      if (BlacklistedKeys.Contains(eventKey) || ModKeys.Contains(eventKey)) continue;
+      if (!ImGuiP.IsKeyDown(eventKey))
+        continue;
+
+      if (eventKey == ImGuiKey.Escape)
+        continue;
+
+      if (BlacklistedKeys.Contains(eventKey) || ModKeys.Contains(eventKey))
+        continue;
 
       control = ImGuiP.IsKeyDown(ImGuiKey.ModCtrl);
       shift = ImGuiP.IsKeyDown(ImGuiKey.ModShift);

@@ -1,21 +1,23 @@
-﻿using BepInEx;
+﻿using System.Diagnostics;
+using System.Threading.Tasks;
+
+using BepInEx;
 using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP;
+
 using HarmonyLib;
-using Il2CppSystem.Runtime.InteropServices;
+
 using PlayerList.GUI;
 using PlayerList.GUI.Tabs;
 using PlayerList.Patches;
 using PlayerList.Utils;
-using System.Diagnostics;
-using System.Threading.Tasks;
 
 namespace PlayerList;
 
 [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
-public class Plugin : BasePlugin
+internal class Plugin : BasePlugin
 {
-  internal static new ManualLogSource Log;
+  new internal static ManualLogSource Log;
 
   public override async void Load()
   {
@@ -23,21 +25,25 @@ public class Plugin : BasePlugin
     Log = base.Log;
     Log.LogInfo($"Plugin {MyPluginInfo.PLUGIN_GUID} is loaded!");
 
-    AddComponent<InputsManager>();
+    _ = AddComponent<InputsManager>();
 
     ProcessUtils.Process = Process.GetProcessesByName("Knightfall")[0];
     ProcessUtils.GameWindowHandle = ProcessUtils.FindWindow(null, "Knightfall");
     ConfigManager.Setup();
 
     try
-    { PlayersTab.CustomPlayers = await API.FetchCustomPlayers(); }
+    {
+      PlayersTab.CustomPlayers = await API.FetchCustomPlayers();
+    }
     catch
-    { PlayersTab.CustomPlayers = []; }
+    {
+      PlayersTab.CustomPlayers = new System.Collections.Generic.List<APIPlayer>();
+    }
 
     var renderer = new Renderer();
-    _ = Task.Run(renderer.Run);
+    _ = Task.Run(() => renderer.Run());
 
-    Harmony.CreateAndPatchAll(typeof(PhotonHandlerPatch));
-    Harmony.CreateAndPatchAll(typeof(PhotonNetworkPatch));
+    _ = Harmony.CreateAndPatchAll(typeof(PhotonHandlerPatch));
+    _ = Harmony.CreateAndPatchAll(typeof(PhotonNetworkPatch));
   }
 }

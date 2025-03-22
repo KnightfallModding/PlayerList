@@ -1,14 +1,16 @@
-using Hexa.NET.ImGui;
-using PlayerList.Utils;
 using System;
 using System.Numerics;
 
+using Hexa.NET.ImGui;
+
+using PlayerList.Utils;
+
 namespace PlayerList.GUI.Tabs;
 
-public static class ConfigTab
+internal static class ConfigTab
 {
 #nullable enable
-  public static Keybind? CurrentlySettingKeybind { get; set; } = null;
+  public static Keybind? CurrentlySettingKeybind { get; set; }
 #nullable disable
 
   public static void Render()
@@ -34,18 +36,16 @@ public static class ConfigTab
 
   private static void ChangePositionPicker()
   {
-    var currentPosition = ConfigManager.Position.Value;
+    PositionEnum currentPosition = ConfigManager.Position.Value;
 
     if (ImGui.BeginCombo("Position", currentPosition.ToString(), ImGuiComboFlags.None))
     {
-      foreach (var position in Enum.GetNames(typeof(PositionEnum)))
+      foreach (string position in Enum.GetNames(typeof(PositionEnum)))
       {
-        var isSelected = currentPosition.ToString() == position;
+        bool isSelected = currentPosition.ToString() == position;
 
         if (ImGui.Selectable(position, isSelected))
-        {
           ConfigManager.Position.Value = (PositionEnum)Enum.Parse(typeof(PositionEnum), position);
-        }
       }
 
       ImGui.EndCombo();
@@ -54,29 +54,35 @@ public static class ConfigTab
 
   private static void ToggleMenuCheckbox()
   {
-    var isMenuEnabled = Renderer.IsVisible;
+    bool isMenuEnabled = Renderer.IsVisible;
 
-    ImGui.Checkbox("Enable menu", ref isMenuEnabled);
-    if (isMenuEnabled != Renderer.IsVisible) Renderer.ToggleMenu();
+    _ = ImGui.Checkbox("Enable menu", ref isMenuEnabled);
+    if (isMenuEnabled != Renderer.IsVisible)
+      Renderer.ToggleMenu();
   }
 
   private static void ToggleUsernamesCheckbox()
   {
-    var areUsernamesDisplayed = ConfigManager.DisplayUsernames.Value;
+    bool areUsernamesDisplayed = ConfigManager.DisplayUsernames.Value;
 
-    ImGui.Checkbox("Display usernames", ref areUsernamesDisplayed);
-    if (areUsernamesDisplayed != ConfigManager.DisplayUsernames.Value) Renderer.ToggleUsernames();
+    _ = ImGui.Checkbox("Display usernames", ref areUsernamesDisplayed);
+    if (areUsernamesDisplayed != ConfigManager.DisplayUsernames.Value)
+      Renderer.ToggleUsernames();
   }
 
   private static void ChangeOpacitySlider()
   {
-    var windowBg = ImGui.GetStyle().Colors[(int)ImGuiCol.WindowBg];
+    Vector4 windowBg = ImGui.GetStyle().Colors[(int)ImGuiCol.WindowBg];
     var currentAlpha = (int)(windowBg.W * 100);
 
     if (ImGui.SliderInt("Opacity", ref currentAlpha, 0, 100) && currentAlpha / 100f != windowBg.W)
+    {
       ImGui.GetStyle().Colors[(int)ImGuiCol.WindowBg].W = currentAlpha / 100f;
+    }
     else if (ImGui.IsItemDeactivated())
+    {
       ConfigManager.Opacity.Value = currentAlpha / 100f;
+    }
   }
 
   private static void KeybindsCategory()
@@ -91,10 +97,12 @@ public static class ConfigTab
 
   private static void SetKeybind()
   {
-    if (CurrentlySettingKeybind == null) return;
+    if (CurrentlySettingKeybind is null)
+      return;
 
-    InputsManager.GetKeybind(out var control, out var shift, out var alt, out var key);
-    if (key == ImGuiKey.None) return;
+    InputsManager.GetKeybind(out bool control, out bool shift, out bool alt, out ImGuiKey key);
+    if (key == ImGuiKey.None)
+      return;
 
     CurrentlySettingKeybind.Control = control;
     CurrentlySettingKeybind.Shift = shift;
@@ -107,24 +115,32 @@ public static class ConfigTab
   private static void KeybindGroup<T>(string name, ConfigWithKeybind<T> config)
   {
     var currentKey = "";
-    var keybind = config.Keybind;
-    if (keybind.Control) currentKey += "Ctrl + ";
-    if (keybind.Shift) currentKey += "Shift + ";
-    if (keybind.Alt) currentKey += "Alt + ";
+    Keybind keybind = config.Keybind;
+    if (keybind.Control)
+      currentKey += "Ctrl + ";
+
+    if (keybind.Shift)
+      currentKey += "Shift + ";
+
+    if (keybind.Alt)
+      currentKey += "Alt + ";
+
     currentKey += keybind.Key;
 
     ImGui.BeginGroup();
     ImGui.AlignTextToFramePadding();
     ImGui.Text(name);
     ImGui.SameLine();
-    if (CurrentlySettingKeybind == null)
+    if (CurrentlySettingKeybind is null)
     {
-      if (ImGui.Button($"{currentKey}###{config.Name}")) CurrentlySettingKeybind = config.Keybind;
+      if (ImGui.Button($"{currentKey}###{config.Name}"))
+        CurrentlySettingKeybind = config.Keybind;
     }
     else
     {
-      if (CurrentlySettingKeybind == config.Keybind) ImGui.Button($"...###{config.Name}");
-      else ImGui.Button($"{currentKey}###{config.Name}");
+      _ = (CurrentlySettingKeybind == config.Keybind)
+        ? ImGui.Button($"...###{config.Name}")
+        : ImGui.Button($"{currentKey}###{config.Name}");
     }
     ImGui.EndGroup();
   }
@@ -137,9 +153,12 @@ public static class ConfigTab
     ImGui.PushStyleColor(ImGuiCol.ButtonHovered, new Vector4(.8f, 0, 0, 1));
     ImGui.PushStyleColor(ImGuiCol.ButtonActive, new Vector4(.8f, 0, 0, 1));
 
-    if (ImGui.Button("Reset settings")) ConfigManager.ResetSettings();
+    if (ImGui.Button("Reset settings"))
+      ConfigManager.ResetSettings();
+
     ImGui.SameLine();
-    if (ImGui.Button("Reset keybinds")) ConfigManager.ResetKeybinds();
+    if (ImGui.Button("Reset keybinds"))
+      ConfigManager.ResetKeybinds();
 
     ImGui.PopStyleColor(3);
   }
@@ -148,14 +167,12 @@ public static class ConfigTab
   {
     ImGui.NewLine();
     if (ImGui.CollapsingHeader("⚙️Advanced"))
-    {
       FontSizeSlider();
-    }
   }
 
   private static void FontSizeSlider()
   {
-    var currentFontSize = ConfigManager.FontSize.Value;
+    int currentFontSize = ConfigManager.FontSize.Value;
 
     if (ImGui.SliderInt("FontSize", ref currentFontSize, FontsManager.MinFontSize, FontsManager.MaxFontSize) && currentFontSize != ConfigManager.FontSize.Value)
     {

@@ -1,19 +1,21 @@
+using System.IO;
+
 using BepInEx;
 using BepInEx.Configuration;
+
 using Hexa.NET.ImGui;
-using System.IO;
 
 namespace PlayerList.Utils;
 
 public enum PositionEnum
 {
-  TopLeft,
-  TopRight,
-  BottomLeft,
-  BottomRight
-};
+  TopLeft = 0,
+  TopRight = 1,
+  BottomLeft = 2,
+  BottomRight = 3,
+}
 
-public static class ConfigManager
+internal static class ConfigManager
 {
   public static ConfigFile File { get; private set; }
 
@@ -56,14 +58,24 @@ public static class ConfigManager
   }
 }
 
-public class ConfigWithKeybind<T>(ConfigFile config, string name, T value = default, bool control = false, bool shift = false, bool alt = false, ImGuiKey key = ImGuiKey.None)
+internal class ConfigWithKeybind<T>(ConfigFile config, string name, T value = default, bool control = false, bool shift = false, bool alt = false, ImGuiKey key = ImGuiKey.None)
 {
   private readonly ConfigEntry<T> _value = config.Bind("General", name, value);
 
-  public string Name { get => name; }
-  public T DefaultValue { get => (T)_value.DefaultValue; }
-  public T Value { get => _value.Value; set => _value.Value = value; }
-  public Keybind Keybind { get; } = new Keybind(config, name, control, shift, alt, key);
+  public string Name
+  {
+    get => name;
+  }
+  public T DefaultValue
+  {
+    get => (T)_value.DefaultValue;
+  }
+  public T Value
+  {
+    get => _value.Value;
+    set => _value.Value = value;
+  }
+  public Keybind Keybind { get; } = new(config, name, control, shift, alt, key);
 }
 
 /// <summary>
@@ -71,20 +83,44 @@ public class ConfigWithKeybind<T>(ConfigFile config, string name, T value = defa
 /// </summary>
 /// <param name="file">Your BepInEx config file.</param>
 /// <param name="name">The base name for this keybind (e.g. "ToggleDisplay").</param>
+/// <param name="control"></param>
+/// <param name="shift"></param>
+/// <param name="alt"></param>
+/// <param name="key"></param>
 /// <param name="section">The config section to use (default is "Keybinds").</param>
-public class Keybind(ConfigFile file, string name, bool control, bool shift, bool alt, ImGuiKey key, string section = "Keybinds")
+internal class Keybind(ConfigFile file, string name, bool control, bool shift, bool alt, ImGuiKey key, string section = "Keybinds")
 {
-  // Private config entries for each property.
+  /// <summary>
+  /// Private config entries for each property.
+  /// </summary>
   private readonly ConfigEntry<bool> control = file.Bind(section, $"{name}.Ctrl", control, $"Ctrl modifier for {name}");
   private readonly ConfigEntry<bool> shift = file.Bind(section, $"{name}.Shift", shift, $"Shift modifier for {name}");
   private readonly ConfigEntry<bool> alt = file.Bind(section, $"{name}.Alt", alt, $"Alt modifier for {name}");
   private readonly ConfigEntry<ImGuiKey> key = file.Bind(section, $"{name}.Key", key, $"Key for {name}");
 
-  // Public properties exposing the values.
-  public bool Control { get => control.Value; set => control.Value = value; }
-  public bool Shift { get => shift.Value; set => shift.Value = value; }
-  public bool Alt { get => alt.Value; set => alt.Value = value; }
-  public ImGuiKey Key { get => key.Value; set => key.Value = value; }
+  /// <summary>
+  /// Public properties exposing the values.
+  /// </summary>
+  public bool Control
+  {
+    get => control.Value;
+    set => control.Value = value;
+  }
+  public bool Shift
+  {
+    get => shift.Value;
+    set => shift.Value = value;
+  }
+  public bool Alt
+  {
+    get => alt.Value;
+    set => alt.Value = value;
+  }
+  public ImGuiKey Key
+  {
+    get => key.Value;
+    set => key.Value = value;
+  }
 
   public void Reset()
   {

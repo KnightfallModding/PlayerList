@@ -3,36 +3,73 @@ using System.Collections.Generic;
 using System.Numerics;
 
 namespace PlayerList.Utils;
-// Represents a node in the rich text tree.
-public class RichTextNode
+
+/// <summary>
+/// Represents a node in the rich text tree.
+/// </summary>
+internal class RichTextNode
 {
-  public string Tag { get; set; }         // For allowed tags like "b", "i", "color", etc.
-  public string Attribute { get; set; }   // e.g. for <color=#ffffff>, holds "#ffffff"
+  /// <summary>
+  /// For allowed tags like &quot;b&quot;, &quot;i&quot;, &quot;color&quot;, etc.
+  /// </summary>
+  public string Tag { get; set; }
+  /// <summary>
+  /// e.g. for &lt;color=#ffffff&gt;, holds &quot;#ffffff&quot;
+  /// </summary>
+  public string Attribute { get; set; }
   public List<RichTextNode> Children { get; set; } = [];
-  public string Text { get; set; }        // Non-null for text nodes
+  /// <summary>
+  /// Non-null for text nodes
+  /// </summary>
+  public string Text { get; set; }
 }
 
-// The safe parser builds a tree from the input.
-// If a tag is not allowed, its entire span is consumed as literal text.
-public class XMLParser(string input)
+/// <summary>
+/// The safe parser builds a tree from the input.
+/// If a tag is not allowed, its entire span is consumed as literal text.
+/// </summary>
+internal class XMLParser(string input)
 {
   private readonly string input = input;
-  private int pos = 0;
+  private int pos;
 
-  // Allowed tags from TextMeshPro rich text.
+  /// <summary>
+  /// Allowed tags from TextMeshPro rich text.
+  /// </summary>
   private static readonly HashSet<string> AllowedTags = new(StringComparer.OrdinalIgnoreCase)
         {
-            "b", "i", "u", "s", "color", "size", "align", "font", "material",
-            "sprite", "quad", "link", "mark", "sub", "sup", "br", "noparse", "rotate", "voffset",
+          "b",
+          "i",
+          "u",
+          "s",
+          "color",
+          "size",
+          "align",
+          "font",
+          "material",
+          "sprite",
+          "quad",
+          "link",
+          "mark",
+          "sub",
+          "sup",
+          "br",
+          "noparse",
+          "rotate",
+          "voffset",
         };
 
-  // Entry point: parse the entire input into a document node.
+  /// <summary>
+  /// Entry point: parse the entire input into a document node.
+  /// </summary>
   public List<TextSegment> Parse() => TextSegmentFlattener.Flatten(new() { Children = ParseNodes() });
 
-  // ParseNodes reads a sequence of nodes until end of input or a valid closing tag.
+  /// <summary>
+  /// ParseNodes reads a sequence of nodes until end of input or a valid closing tag.
+  /// </summary>
   private List<RichTextNode> ParseNodes()
   {
-    List<RichTextNode> nodes = [];
+    var nodes = new List<RichTextNode>();
 
     while (pos < input.Length)
     {
@@ -42,133 +79,154 @@ public class XMLParser(string input)
         if (pos + 1 < input.Length && input[pos + 1] == '/')
         {
           // Peek the tag name.
-          var closingName = PeekTagName();
+          string closingName = PeekTagName();
           // If it's a valid allowed closing tag, let the caller handle it.
-          if (closingName != null && AllowedTags.Contains(closingName))
+          if (closingName is not null && AllowedTags.Contains(closingName))
           {
             break;
           }
           else
           {
             // Unknown closing tag: treat as literal.
-            nodes.Add(new RichTextNode { Text = ConsumeUnknownTag() });
+            nodes.Add(new RichTextNode() { Text = ConsumeUnknownTag() });
           }
         }
         else
         {
           // Peek tag name of the opening tag.
-          var tagName = PeekTagName();
-          if (tagName != null && AllowedTags.Contains(tagName))
+          string tagName = PeekTagName();
+          if (tagName is not null && AllowedTags.Contains(tagName))
           {
             // Parse the allowed element.
-            var element = ParseElement();
-            if (element != null)
+            RichTextNode element = ParseElement();
+            if (element is not null)
             {
               nodes.Add(element);
             }
             else
             {
               // Fallback: treat as literal.
-              nodes.Add(new RichTextNode { Text = ConsumeUnknownTag() });
+              nodes.Add(new RichTextNode() { Text = ConsumeUnknownTag() });
             }
           }
           else
           {
             // Unknown tag – consume the entire tag (and if possible its closing pair) as literal.
-            nodes.Add(new RichTextNode { Text = ConsumeUnknownTag() });
+            nodes.Add(new RichTextNode() { Text = ConsumeUnknownTag() });
           }
         }
       }
       else
       {
         // Regular text: consume until the next '<'
-        var start = pos;
+        int start = pos;
         while (pos < input.Length && input[pos] != '<')
           pos++;
-        nodes.Add(new RichTextNode { Text = input[start..pos] });
+
+        nodes.Add(new RichTextNode() { Text = input[start..pos] });
       }
     }
 
     Plugin.Log.LogInfo($"Count: {nodes.Count}");
-    foreach (var node in nodes)
-    {
+    foreach (RichTextNode node in nodes)
       Plugin.Log.LogInfo($"Node: {node.Text}");
-    }
 
     return nodes;
   }
 
-  // PeekTagName reads a tag name without advancing pos.
-  // It looks past '<' and an optional '/'.
+  /// <summary>
+  /// PeekTagName reads a tag name without advancing pos.
+  /// It looks past '<' and an optional '/'.
+  /// </summary>
   private string PeekTagName()
   {
-    var temp = pos;
+    int temp = pos;
 
-    if (temp >= input.Length || input[temp] != '<') return null;
+    if (temp >= input.Length || input[temp] != '<')
+      return null;
+
     temp++; // skip '<'
 
-    if (temp < input.Length && input[temp] == '/') temp++; // skip '/'
-    var start = temp;
-    while (temp < input.Length && char.IsLetterOrDigit(input[temp])) temp++;
-    if (start == temp) return null;
+    if (temp < input.Length && input[temp] == '/')
+      temp++; // skip '/'
+
+    int start = temp;
+    while (temp < input.Length && char.IsLetterOrDigit(input[temp]))
+      temp++;
+
+    if (start == temp)
+      return null;
 
     return input[start..temp];
   }
 
-  // ConsumeUnknownTag consumes the entire tag (and its matching closing tag if present) as literal text.
-  // It returns the literal substring.
+  /// <summary>
+  /// ConsumeUnknownTag consumes the entire tag (and its matching closing tag if present) as literal text.
+  /// It returns the literal substring.
+  /// </summary>
   private string ConsumeUnknownTag()
   {
-    var start = pos;
+    int start = pos;
     // First, consume until the end of the current tag.
     while (pos < input.Length && input[pos] != '>')
       pos++;
-    if (pos < input.Length) pos++; // consume '>'
-                                   // If this is an opening tag, try to find the matching closing tag.
-    var tagName = PeekTagNameFrom(start);
+
+    if (pos < input.Length)
+      pos++; // consume '>'
+
+    // If this is an opening tag, try to find the matching closing tag.
+    string tagName = PeekTagNameFrom(start);
     if (!string.IsNullOrEmpty(tagName))
     {
       // Look ahead for a matching closing tag.
-      var closingTag = "</" + tagName + ">";
-      var closingIndex = input.IndexOf(closingTag, pos, StringComparison.OrdinalIgnoreCase);
+      string closingTag = "</" + tagName + ">";
+      int closingIndex = input.IndexOf(closingTag, pos, StringComparison.OrdinalIgnoreCase);
       if (closingIndex != -1)
-      {
         pos = closingIndex + closingTag.Length;
-      }
     }
     return input[start..pos];
   }
 
-  // PeekTagNameFrom is similar to PeekTagName but starts at a given position.
+  /// <summary>
+  /// PeekTagNameFrom is similar to PeekTagName but starts at a given position.
+  /// </summary>
   private string PeekTagNameFrom(int position)
   {
-    var temp = position;
+    int temp = position;
     if (temp >= input.Length || input[temp] != '<')
       return null;
+
     temp++; // skip '<'
     if (temp < input.Length && input[temp] == '/')
       temp++; // skip '/'
-    var start = temp;
+
+    int start = temp;
     while (temp < input.Length && char.IsLetterOrDigit(input[temp]))
       temp++;
+
     if (start == temp)
       return null;
+
     return input[start..temp];
   }
 
-  // ParseElement parses an allowed element (whose tag is in AllowedTags).
+  /// <summary>
+  /// ParseElement parses an allowed element (whose tag is in AllowedTags).
+  /// </summary>
   private RichTextNode ParseElement()
   {
-    var originalPos = pos;
+    int originalPos = pos;
     if (pos >= input.Length || input[pos] != '<')
       return null;
+
     pos++; // Skip '<'
 
     // Parse tag name.
-    var tagNameStart = pos;
+    int tagNameStart = pos;
     while (pos < input.Length && char.IsLetterOrDigit(input[pos]))
       pos++;
-    var tagName = input[tagNameStart..pos];
+
+    string tagName = input[tagNameStart..pos];
     // (At this point we expect tagName is allowed.)
     // Skip whitespace.
     SkipWhitespace();
@@ -178,14 +236,11 @@ public class XMLParser(string input)
     {
       pos++; // Skip '='
       SkipWhitespace();
-      if (pos < input.Length && input[pos] == '\"')
-        attributeValue = ParseQuotedValue();
-      else
-        attributeValue = ParseUnquotedValue();
+      attributeValue = (pos < input.Length && input[pos] == '\"') ? ParseQuotedValue() : ParseUnquotedValue();
       SkipWhitespace();
     }
 
-    bool selfClosing = false;
+    var selfClosing = false;
     if (pos < input.Length && input[pos] == '/')
     {
       selfClosing = true;
@@ -200,17 +255,15 @@ public class XMLParser(string input)
     }
     pos++; // Skip '>'
 
-    var node = new RichTextNode { Tag = tagName, Attribute = attributeValue };
+    var node = new RichTextNode() { Tag = tagName, Attribute = attributeValue };
 
     if (selfClosing || tagName.Equals("br", StringComparison.OrdinalIgnoreCase))
-    {
       return node;
-    }
 
     // Special handling for <noparse>
     if (tagName.Equals("noparse", StringComparison.OrdinalIgnoreCase))
     {
-      var contentStart = pos;
+      int contentStart = pos;
       while (pos < input.Length)
       {
         if (input[pos] == '<' && pos + 1 < input.Length && input[pos + 1] == '/')
@@ -221,8 +274,8 @@ public class XMLParser(string input)
         }
         pos++;
       }
-      node.Children.Add(new RichTextNode { Text = input[contentStart..pos] });
-      TryConsumeClosingTag(tagName);
+      node.Children.Add(new RichTextNode() { Text = input[contentStart..pos] });
+      _ = TryConsumeClosingTag(tagName);
       return node;
     }
 
@@ -246,26 +299,33 @@ public class XMLParser(string input)
     return node;
   }
 
-  // Attempts to consume a closing tag for the given tagName.
+  /// <summary>
+  /// Attempts to consume a closing tag for the given tagName.
+  /// </summary>
   private bool TryConsumeClosingTag(string tagName)
   {
     SkipWhitespace();
     if (pos >= input.Length || input[pos] != '<')
       return false;
-    var temp = pos;
+
+    int temp = pos;
     temp++; // Skip '<'
     if (temp >= input.Length || input[temp] != '/')
       return false;
+
     temp++; // Skip '/'
-    var nameStart = temp;
+    int nameStart = temp;
     while (temp < input.Length && char.IsLetterOrDigit(input[temp]))
       temp++;
+
     string closingName = input.Substring(nameStart, temp - nameStart);
     if (!closingName.Equals(tagName, StringComparison.OrdinalIgnoreCase))
       return false;
+
     SkipWhitespaceAt(ref temp);
     if (temp >= input.Length || input[temp] != '>')
       return false;
+
     temp++; // Skip '>'
     pos = temp;
     return true;
@@ -274,21 +334,24 @@ public class XMLParser(string input)
   private string ParseQuotedValue()
   {
     pos++; // Skip opening quote
-    var start = pos;
+    int start = pos;
     while (pos < input.Length && input[pos] != '\"')
       pos++;
+
     if (pos >= input.Length)
       return null;
-    var value = input[start..pos];
+
+    string value = input[start..pos];
     pos++; // Skip closing quote
     return value;
   }
 
   private string ParseUnquotedValue()
   {
-    var start = pos;
+    int start = pos;
     while (pos < input.Length && !char.IsWhiteSpace(input[pos]) && input[pos] != '>')
       pos++;
+
     return input.Substring(start, pos - start);
   }
 
@@ -305,8 +368,10 @@ public class XMLParser(string input)
   }
 }
 
-// A flat text segment with formatting properties.
-public class TextSegment
+/// <summary>
+/// A flat text segment with formatting properties.
+/// </summary>
+internal class TextSegment
 {
   public string Text { get; set; }
   public bool Bold { get; set; }
@@ -323,8 +388,10 @@ public class TextSegment
   }
 }
 
-// Tracks active formatting.
-public class Formatting
+/// <summary>
+/// Tracks active formatting.
+/// </summary>
+internal class Formatting
 {
   public bool Bold { get; set; }
   public bool Italic { get; set; }
@@ -334,31 +401,28 @@ public class Formatting
   public string Size { get; set; }
   public int Rotate { get; set; }
 
-  public Formatting Clone()
+  public Formatting Clone() => new()
   {
-    return new Formatting
-    {
-      Bold = Bold,
-      Italic = Italic,
-      Underline = Underline,
-      Strikethrough = Strikethrough,
-      Color = Color,
-      Size = Size
-    };
-  }
+    Bold = Bold,
+    Italic = Italic,
+    Underline = Underline,
+    Strikethrough = Strikethrough,
+    Color = Color,
+    Size = Size,
+  };
 }
 
-// Flattens the nested RichTextNode tree into a flat list of TextSegment objects.
-public static class TextSegmentFlattener
+/// <summary>
+/// Flattens the nested RichTextNode tree into a flat list of TextSegment objects.
+/// </summary>
+internal static class TextSegmentFlattener
 {
   public static List<TextSegment> Flatten(RichTextNode root)
   {
     var segments = new List<TextSegment>();
     var initialFormatting = new Formatting();
-    foreach (var node in root.Children)
-    {
+    foreach (RichTextNode node in root.Children)
       FlattenNode(node, initialFormatting, segments);
-    }
 
     Plugin.Log.LogInfo(segments);
 
@@ -370,7 +434,7 @@ public static class TextSegmentFlattener
     // If node is text, add a segment.
     if (!string.IsNullOrEmpty(node.Text))
     {
-      segments.Add(new TextSegment
+      segments.Add(new TextSegment()
       {
         Text = node.Text,
         Bold = current.Bold,
@@ -384,7 +448,7 @@ public static class TextSegmentFlattener
     }
 
     // Update formatting based on allowed tags.
-    var newFormatting = current.Clone();
+    Formatting newFormatting = current.Clone();
     if (!string.IsNullOrEmpty(node.Tag))
     {
       switch (node.Tag.ToLower())
@@ -414,27 +478,31 @@ public static class TextSegmentFlattener
       }
     }
 
-    foreach (var child in node.Children) FlattenNode(child, newFormatting, segments);
+    foreach (RichTextNode child in node.Children)
+      FlattenNode(child, newFormatting, segments);
   }
 
-  public static Vector4 ParseColor(string color) => color switch
+  public static Vector4 ParseColor(string color)
   {
-    "black" => new(0, 0, 0, 1),
-    "blue" => new(0, 0, 1, 1),
-    "green" => new(0, 1, 0, 1),
-    "orange" => new(1, 0.647f, 0, 1),
-    "purple" => new(0.502f, 0, 0.502f, 1),
-    "red" => new(1, 0, 0, 1),
-    _ => ParseColorFallback(color)
-  };
+    return color switch
+    {
+      "black" => new(0, 0, 0, 1),
+      "blue" => new(0, 0, 1, 1),
+      "green" => new(0, 1, 0, 1),
+      "orange" => new(1, 0.647f, 0, 1),
+      "purple" => new(0.502f, 0, 0.502f, 1),
+      "red" => new(1, 0, 0, 1),
+      _ => ParseColorFallback(color)
+    };
+  }
 
   private static Vector4 ParseColorFallback(string color)
   {
     if (color.StartsWith("#"))
     {
-      var parsedColor = Convert.FromHexString(color[1..]);
+      byte[] parsedColor = Convert.FromHexString(color[1..]);
 
-      return new(
+      return new Vector4(
         parsedColor[0] / 255f,
         parsedColor[1] / 255f,
         parsedColor[2] / 255f,
