@@ -5,12 +5,12 @@ using System.Threading.Tasks;
 
 namespace PlayerList.Utils;
 
-internal class APIPlayer(string UUID, string[] prefixes, string username, string[] postfixes)
+internal class APIPlayer(string UUID, string[] prefixes, string username, string[] suffixes)
 {
   public string UUID { get; } = UUID;
   public string[] Prefixes { get; } = prefixes;
   public string Username { get; } = username;
-  public string[] Suffixes { get; } = postfixes;
+  public string[] Suffixes { get; } = suffixes;
 }
 
 internal static class API

@@ -16,7 +16,7 @@ internal class PlayerDetails
 {
   public string[] Prefixes { get; set; }
   public List<TextSegment> Username { get; set; }
-  public string[] Postfixes { get; set; }
+  public string[] Suffixes { get; set; }
   public int LocalId { get; set; }
 
 #nullable enable
@@ -50,14 +50,14 @@ internal static class PlayersTab
       foreach (PlayerDetails player in Players)
       {
         string prefixes = (player.Prefixes.Length > 0) ? $"[{string.Join("][", player.Prefixes)}] " : "";
-        string postfixes = (player.Postfixes.Length > 0) ? $" [{string.Join("][", player.Postfixes)}]" : "";
+        string suffixes = (player.Suffixes.Length > 0) ? $" [{string.Join("][", player.Suffixes)}]" : "";
 
         ImGui.AlignTextToFramePadding();
         ImGui.Text(prefixes);
         ImGui.SameLine(0, 0);
         DisplayUsername(player.Username);
         ImGui.SameLine(0, 0);
-        ImGui.Text(postfixes);
+        ImGui.Text(suffixes);
       }
 
       ImGui.EndTabItem();
@@ -103,7 +103,7 @@ internal static class PlayersTab
     return CustomPlayers.Find(player => player.UUID == UUID)?.Prefixes ?? value;
   }
   public static string GetUsername(Photon.Realtime.Player player, string UUID) => CustomPlayers.Find(player => player.UUID == UUID)?.Username?.Replace("{nickname}", player.NickName) ?? player.NickName;
-  public static string[] GetPostfixes(string UUID) => CustomPlayers.Find(player => player.UUID == UUID)?.Suffixes ?? System.Array.Empty<string>();
+  public static string[] GetSuffixes(string UUID) => CustomPlayers.Find(player => player.UUID == UUID)?.Suffixes ?? System.Array.Empty<string>();
 
   public static void Add(Photon.Realtime.Player player)
   {
@@ -121,7 +121,7 @@ internal static class PlayersTab
       UUID = UUID,
       Prefixes = GetPrefixes(UUID),
       Username = markupParser.Parse(),
-      Postfixes = GetPostfixes(UUID),
+      Suffixes = GetSuffixes(UUID),
     };
     Players.Add(details);
   }
