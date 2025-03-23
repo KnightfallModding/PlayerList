@@ -1,11 +1,9 @@
-using System.Linq;
-
 using Hexa.NET.ImGui;
 
 using PlayerList.GUI.Tabs;
-
-using UnityEngine;
 using Renderer = PlayerList.GUI.Renderer;
+using System.Linq;
+using UnityEngine;
 
 namespace PlayerList.Utils;
 
@@ -41,6 +39,15 @@ internal class InputsManager : MonoBehaviour
     ImGuiKey.RightSuper,
     ImGuiKey.PrintScreen,
   ];
+
+  private static void Update()
+  {
+    if (Input.GetKeyDown(KeyMapper.ConvertImGuiToUnity(ConfigManager.EnableMenu.Keybind.Key)) && !ShouldCancel(ConfigManager.EnableMenu.Keybind))
+      Renderer.ToggleMenu();
+
+    if (Input.GetKeyDown(KeyMapper.ConvertImGuiToUnity(ConfigManager.DisplayUsernames.Keybind.Key)) && !ShouldCancel(ConfigManager.DisplayUsernames.Keybind))
+      Renderer.ToggleUsernames();
+  }
 
   private static bool ShouldCancel(Keybind hotkey, bool isImGui = false)
   {

@@ -49,15 +49,26 @@ internal static class PlayersTab
 
       foreach (PlayerDetails player in Players)
       {
-        string prefixes = (player.Prefixes.Length > 0) ? $"[{string.Join("][", player.Prefixes)}] " : "";
-        string suffixes = (player.Suffixes.Length > 0) ? $" [{string.Join("][", player.Suffixes)}]" : "";
+        string prefixes = (player.Prefixes.Length > 0) ? string.Concat(player.Prefixes) : "";
+        string suffixes = (player.Suffixes.Length > 0) ? string.Concat(player.Suffixes) : "";
+
+        if (prefixes.Length > 0)
+        {
+          ImGui.AlignTextToFramePadding();
+          ImGui.Text(prefixes);
+          VerticalSeparator();
+        }
 
         ImGui.AlignTextToFramePadding();
-        ImGui.Text(prefixes);
-        ImGui.SameLine(0, 0);
         DisplayUsername(player.Username);
-        ImGui.SameLine(0, 0);
-        ImGui.Text(suffixes);
+
+        if (suffixes.Length > 0)
+        {
+          ImGui.AlignTextToFramePadding();
+          VerticalSeparator();
+          ImGui.Text(suffixes);
+          ImGui.NextColumn();
+        }
       }
 
       ImGui.EndTabItem();
@@ -95,6 +106,16 @@ internal static class PlayersTab
 
       ImGui.PopFont();
     }
+  }
+
+  private static void VerticalSeparator()
+  {
+    ImGui.SameLine();
+    ImGui.AlignTextToFramePadding();
+    ImGuiP.SeparatorEx(ImGuiSeparatorFlags.Vertical, 2f);
+    ImGui.SameLine();
+    ImGui.Spacing();
+    ImGui.SameLine();
   }
 
   public static string[] GetPrefixes(string UUID)
