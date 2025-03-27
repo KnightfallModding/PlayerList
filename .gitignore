@@ -4,4 +4,4 @@ release/
 
 user.build.fish
 admin.build.fish
-SupabaseSettings.cs
+SecretKeys.cs
