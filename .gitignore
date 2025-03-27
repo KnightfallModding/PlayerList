@@ -1,3 +1,7 @@
 obj/
 libs/
 release/
+
+user.build.fish
+admin.build.fish
+SupabaseSettings.cs
