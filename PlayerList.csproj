@@ -16,6 +16,10 @@
     <SuppressTfmSupportBuildWarnings>true</SuppressTfmSupportBuildWarnings>
   </PropertyGroup>
 
+  <PropertyGroup Condition="$([System.String]::Copy($(DefineConstants)).Contains('IS_ADMIN'))">
+    <AssemblyName>com.aeryle.playerlist.admin</AssemblyName>
+  </PropertyGroup>
+
   <!-- Deployment properties (set these to your desired paths) -->
   <PropertyGroup>
     <ModLink>https://github.com/KnightfallModding/PlayerList</ModLink>
@@ -119,14 +123,23 @@
     <AssetFiles Include="assets/**" />
   </ItemGroup>
 
-  <!-- Post-compile target to mimic BepInEx.PluginInfoProps -->
-  <Target Name="BuildInfoProps" AfterTargets="Compile">
+  <Target Name="BuildCustomFiles" BeforeTargets="Build">
+    <!-- Mimic BepInEx.PluginInfoProps -->
     <WriteLinesToFile Overwrite="true" File="PlayerListModInfo.cs"
       Lines="namespace PlayerList%3B&#xD;&#xA;&#xD;&#xA;public static class PlayerListModInfo&#xD;&#xA;{&#xD;&#xA;  public const string MOD_NAME = &quot;$(Product)&quot;%3B&#xD;&#xA;  public const string MOD_GUID = &quot;$(AssemblyName)&quot;%3B&#xD;&#xA;  public const string MOD_VERSION = &quot;$(Version)&quot;%3B&#xD;&#xA;  public const string MOD_AUTHOR = &quot;Aeryle&quot;%3B&#xD;&#xA;  public const string MOD_LINK = &quot;$(ModLink)&quot;%3B&#xD;&#xA;}&#xD;&#xA;" />
+
+    <WriteLinesToFile Overwrite="true" File="SecretKeys.cs"
+      Lines="
+namespace PlayerList%3B
+
+internal static class SecretKeys
+{
+  public const string AdminToken = &quot;$(ADMIN_TOKEN)&quot;%3B
+}" />
   </Target>
 
   <!-- Post-build target to mimic build.fish -->
-  <Target Name="DeployPlugin" AfterTargets="Build">
+  <Target Name="DeployPlugin">
     <!-- Remove the old plugin directory -->
     <RemoveDir Directories="$(ModPath)" Condition="Exists('$(ModPath)')" />
 

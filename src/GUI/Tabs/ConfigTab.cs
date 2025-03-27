@@ -211,11 +211,11 @@ internal static class ConfigTab
 
   private static void PrefixInput()
   {
-    _ = ImGui.InputTextWithHint("##Prefixes", "Prefix", ref prefix, 5);
+    _ = ImGui.InputTextWithHint("##Prefixes", "Prefix", ref prefix, 11);
   }
   private static void SuffixInput()
   {
-    _ = ImGui.InputTextWithHint("##Suffixes", "Suffix", ref suffix, 5);
+    _ = ImGui.InputTextWithHint("##Suffixes", "Suffix", ref suffix, 11);
   }
 
   private static void ConfirmButton()
