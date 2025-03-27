@@ -1,12 +1,13 @@
 using HarmonyLib;
 
-using Photon.Pun;
+using Il2CppPhoton.Pun;
 
 using PlayerList.GUI.Tabs;
 
 namespace PlayerList.Patches;
 
-internal static class PhotonNetworkPatch
+[HarmonyPatch]
+internal static class Il2CppPhotonNetworkPatch
 {
   [HarmonyPatch(typeof(PhotonNetwork), nameof(PhotonNetwork.Disconnect))]
   [HarmonyPostfix]

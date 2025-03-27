@@ -1,13 +1,14 @@
 using System.IO;
 using System.Threading.Tasks;
 
-using BepInEx;
-
 using ClickableTransparentOverlay;
 
 using Hexa.NET.ImGui;
 
 using HexaGen.Runtime;
+
+using MelonLoader;
+using MelonLoader.Utils;
 
 using PlayerList.GUI.Skins.Default;
 using PlayerList.GUI.Tabs;
@@ -24,22 +25,24 @@ internal class Renderer : Overlay
   private float windowWidth;
   private float windowHeight;
 
-  public Renderer() : base(MyPluginInfo.PLUGIN_NAME, true, Screen.width, Screen.height)
+  public Renderer() : base(PlayerListModInfo.MOD_NAME, true, Screen.width, Screen.height)
   {
     // Avoid `cimgui.dll` not being detected
-    LibraryLoader.CustomLoadFolders.Add(Path.Combine(Paths.PluginPath, MyPluginInfo.PLUGIN_NAME, "runtime"));
+    // LibraryLoader.CustomLoadFolders.Add(Path.Combine(Paths.PluginPath, MyPluginInfo.MOD_NAME, "runtime"));
+    LibraryLoader.CustomLoadFolders.Add(Path.Combine(MelonEnvironment.ModsDirectory, PlayerListModInfo.MOD_NAME));
 
     FPSLimit = 30;
     VSync = false;
 
-    Plugin.Log.LogDebug("Renderer has been created.");
+    MelonDebug.Msg("Renderer has been created.");
   }
 
   protected override unsafe Task PostInitialized()
   {
     StartProcessHider();
 
-    string fontPath = Path.Combine(Paths.PluginPath, MyPluginInfo.PLUGIN_NAME, "assets", "fonts");
+    // string fontPath = Path.Combine(Paths.PluginPath, MyPluginInfo.MOD_NAME, "assets", "fonts");
+    string fontPath = Path.Combine(MelonEnvironment.ModsDirectory, PlayerListModInfo.MOD_NAME, "assets", "fonts");
     const string fontName = "UbuntuMonoNerdFontMono";
     const string emojisFontName = "Twemoji";
     _ = ReplaceFont(__ => _ = new FontsManager(fontPath, fontName, emojisFontName));
@@ -56,8 +59,8 @@ internal class Renderer : Overlay
     MoveWindow();
 
     ImGui.PushFont(FontsManager.RegularFont);
-    _ = ImGui.Begin(MyPluginInfo.PLUGIN_NAME, ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoNav);
-    _ = ImGui.BeginTabBar(MyPluginInfo.PLUGIN_GUID);
+    _ = ImGui.Begin(PlayerListModInfo.MOD_NAME, ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoNav);
+    _ = ImGui.BeginTabBar(PlayerListModInfo.MOD_GUID);
 
     windowWidth = ImGui.GetWindowWidth();
     windowHeight = ImGui.GetWindowHeight();
@@ -72,13 +75,13 @@ internal class Renderer : Overlay
 
   private static void StartProcessHider()
   {
-    ProcessUtils.OverlayWindowHandle = ProcessUtils.FindWindow(null, MyPluginInfo.PLUGIN_NAME);
+    ProcessUtils.OverlayWindowHandle = ProcessUtils.FindWindow(null, PlayerListModInfo.MOD_NAME);
     ProcessUtils.HideOverlayFromTaskbar();
 
     // TODO: Improve visibility detection instead of just focus.
     ProcessUtils.GameFocusChanged += static (_, @event) =>
     {
-      Plugin.Log.LogInfo($"Window focus changed: {@event.IsFocused}.");
+      MelonLogger.Msg($"Window focus changed: {@event.IsFocused}.");
 
       CursorUnlocker.IsCursorUnlocked = @event.FocusedWindow == FocusedWindow.Overlay;
       IsVisible = @event.IsFocused;

@@ -4,9 +4,12 @@ using PlayerList.GUI.Tabs;
 using Renderer = PlayerList.GUI.Renderer;
 using System.Linq;
 using UnityEngine;
+using System;
+using MelonLoader;
 
 namespace PlayerList.Utils;
 
+[RegisterTypeInIl2Cpp]
 internal class InputsManager : MonoBehaviour
 {
   private static readonly ImGuiKey[] BlacklistedKeys =
@@ -40,7 +43,7 @@ internal class InputsManager : MonoBehaviour
     ImGuiKey.PrintScreen,
   ];
 
-  private static void Update()
+  public void Update()
   {
     if (Input.GetKeyDown(KeyMapper.ConvertImGuiToUnity(ConfigManager.EnableMenu.Keybind.Key)) && !ShouldCancel(ConfigManager.EnableMenu.Keybind))
       Renderer.ToggleMenu();

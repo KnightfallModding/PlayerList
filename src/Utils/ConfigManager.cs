@@ -1,7 +1,4 @@
-using System.IO;
-
-using BepInEx;
-using BepInEx.Configuration;
+using MelonLoader;
 
 using Hexa.NET.ImGui;
 
@@ -17,37 +14,57 @@ public enum PositionEnum
 
 internal static class ConfigManager
 {
-  public static ConfigFile File { get; private set; }
+  /// <summary>
+  /// Categories for settings
+  /// </summary>
+  public static MelonPreferences_Category GeneralCategory { get; private set; }
+  public static MelonPreferences_Category KeybindCategory { get; private set; }
 
-  public static ConfigEntry<PositionEnum> Position { get; private set; }
-  public static ConfigEntry<int> FontSize { get; private set; }
-  public static ConfigEntry<float> Opacity { get; private set; }
+  /// <summary>
+  /// General settings entries
+  /// </summary>
+  public static MelonPreferences_Entry<PositionEnum> Position { get; private set; }
+  public static MelonPreferences_Entry<int> FontSize { get; private set; }
+  public static MelonPreferences_Entry<float> Opacity { get; private set; }
+
+  /// <summary>
+  /// Settings with keybind support
+  /// </summary>
   public static ConfigWithKeybind<bool> EnableMenu { get; private set; }
   public static ConfigWithKeybind<bool> DisplayUsernames { get; private set; }
 
   public static void Setup()
   {
-    File = new ConfigFile(Path.Join(Paths.ConfigPath, $"{MyPluginInfo.PLUGIN_GUID}.cfg"), true);
+    // Create preferences categories.
+    // MelonPreferences automatically saves to the mod's config file in the user data folder.
+    GeneralCategory = MelonPreferences.CreateCategory("General", "General settings", false, true);
+    KeybindCategory = MelonPreferences.CreateCategory("Keybinds", "Keybind settings", false, true);
 
-    EnableMenu = new ConfigWithKeybind<bool>(File, "EnableMenu", true, false, false, false, ImGuiKey.F9);
-    DisplayUsernames = new ConfigWithKeybind<bool>(File, "DisplayUsernames", false, false, false, false, ImGuiKey.F10);
-    Position = File.Bind("General", "Position", PositionEnum.TopLeft, "Where to place the menu on the screen");
-    FontSize = File.Bind("General", "FontSize", FontsManager.DefaultFontSize);
-    Opacity = File.Bind("General", "Opacity", .8f);
+    // Create entries in the General category.
+    Position = GeneralCategory.CreateEntry("Position", PositionEnum.TopLeft, "Where to place the menu on the screen");
+    // Assumes FontsManager.DefaultFontSize is defined elsewhere in your project.
+    FontSize = GeneralCategory.CreateEntry("FontSize", FontsManager.DefaultFontSize, "Menu font size");
+    Opacity = GeneralCategory.CreateEntry("Opacity", 0.8f, "Menu opacity");
 
-    // Always set the menu to on by default
+    // Create keybind-enabled settings.
+    EnableMenu = new ConfigWithKeybind<bool>("EnableMenu", true, false, false, false, ImGuiKey.F9);
+    DisplayUsernames = new ConfigWithKeybind<bool>("DisplayUsernames", false, false, false, false, ImGuiKey.F10);
+
+    // Always set the menu to on by default.
     EnableMenu.Value = true;
+    // GeneralCategory.SaveToFile();
+    // KeybindCategory.SaveToFile();
   }
 
   public static void ResetSettings()
   {
     EnableMenu.Value = EnableMenu.DefaultValue;
     DisplayUsernames.Value = DisplayUsernames.DefaultValue;
-    Position.Value = (PositionEnum)Position.DefaultValue;
-    FontSize.Value = (int)FontSize.DefaultValue;
-    Opacity.Value = (float)Opacity.DefaultValue;
+    Position.Value = Position.DefaultValue;
+    FontSize.Value = FontSize.DefaultValue;
+    Opacity.Value = Opacity.DefaultValue;
 
-    // Update the window's transparency
+    // Update the window's transparency.
     ImGui.GetStyle().Colors[(int)ImGuiCol.WindowBg].W = Opacity.Value;
   }
 
@@ -58,49 +75,51 @@ internal static class ConfigManager
   }
 }
 
-internal class ConfigWithKeybind<T>(ConfigFile config, string name, T value = default, bool control = false, bool shift = false, bool alt = false, ImGuiKey key = ImGuiKey.None)
+internal class ConfigWithKeybind<T>
 {
-  private readonly ConfigEntry<T> _value = config.Bind("General", name, value);
+  private readonly MelonPreferences_Entry<T> _value;
 
-  public string Name
-  {
-    get => name;
-  }
-  public T DefaultValue
-  {
-    get => (T)_value.DefaultValue;
-  }
+  public string Name { get; }
+  public T DefaultValue => _value.DefaultValue;
   public T Value
   {
     get => _value.Value;
     set => _value.Value = value;
   }
-  public Keybind Keybind { get; } = new(config, name, control, shift, alt, key);
+  public Keybind Keybind { get; }
+
+  public ConfigWithKeybind(string name, T defaultValue, bool control, bool shift, bool alt, ImGuiKey key)
+  {
+    Name = name;
+    // Create the general setting entry.
+    _value = ConfigManager.GeneralCategory.CreateEntry(name, defaultValue);
+    // Initialize the keybind using the Keybind category.
+    Keybind = new Keybind(name, control, shift, alt, key);
+  }
 }
 
 /// <summary>
-/// Creates a new keybind configuration.
+/// Represents a keybind configuration using MelonLoader's preferences.
 /// </summary>
-/// <param name="file">Your BepInEx config file.</param>
-/// <param name="name">The base name for this keybind (e.g. "ToggleDisplay").</param>
-/// <param name="control"></param>
-/// <param name="shift"></param>
-/// <param name="alt"></param>
-/// <param name="key"></param>
-/// <param name="section">The config section to use (default is "Keybinds").</param>
-internal class Keybind(ConfigFile file, string name, bool control, bool shift, bool alt, ImGuiKey key, string section = "Keybinds")
+internal class Keybind
 {
-  /// <summary>
-  /// Private config entries for each property.
-  /// </summary>
-  private readonly ConfigEntry<bool> control = file.Bind(section, $"{name}.Ctrl", control, $"Ctrl modifier for {name}");
-  private readonly ConfigEntry<bool> shift = file.Bind(section, $"{name}.Shift", shift, $"Shift modifier for {name}");
-  private readonly ConfigEntry<bool> alt = file.Bind(section, $"{name}.Alt", alt, $"Alt modifier for {name}");
-  private readonly ConfigEntry<ImGuiKey> key = file.Bind(section, $"{name}.Key", key, $"Key for {name}");
+  private readonly MelonPreferences_Entry<bool> control;
+  private readonly MelonPreferences_Entry<bool> shift;
+  private readonly MelonPreferences_Entry<bool> alt;
+  private readonly MelonPreferences_Entry<ImGuiKey> key;
+  public readonly string Name;
 
-  /// <summary>
-  /// Public properties exposing the values.
-  /// </summary>
+  public Keybind(string name, bool controlDefault, bool shiftDefault, bool altDefault, ImGuiKey keyDefault)
+  {
+    Name = name;
+
+    // Create entries in the Keybinds category.
+    control = ConfigManager.KeybindCategory.CreateEntry($"{name}_Ctrl", controlDefault);
+    shift = ConfigManager.KeybindCategory.CreateEntry($"{name}_Shift", shiftDefault);
+    alt = ConfigManager.KeybindCategory.CreateEntry($"{name}_Alt", altDefault);
+    key = ConfigManager.KeybindCategory.CreateEntry($"{name}_Key", keyDefault);
+  }
+
   public bool Control
   {
     get => control.Value;
@@ -124,9 +143,9 @@ internal class Keybind(ConfigFile file, string name, bool control, bool shift, b
 
   public void Reset()
   {
-    control.Value = (bool)control.DefaultValue;
-    shift.Value = (bool)shift.DefaultValue;
-    alt.Value = (bool)alt.DefaultValue;
-    key.Value = (ImGuiKey)key.DefaultValue;
+    control.Value = control.DefaultValue;
+    shift.Value = shift.DefaultValue;
+    alt.Value = alt.DefaultValue;
+    key.Value = key.DefaultValue;
   }
 }

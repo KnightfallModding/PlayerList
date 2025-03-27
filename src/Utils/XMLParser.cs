@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 
+using MelonLoader;
+
 namespace PlayerList.Utils;
 
 /// <summary>
@@ -28,6 +30,7 @@ internal class RichTextNode
 /// The safe parser builds a tree from the input.
 /// If a tag is not allowed, its entire span is consumed as literal text.
 /// </summary>
+/// <param name="input"></param>
 internal class XMLParser(string input)
 {
   private readonly string input = input;
@@ -37,27 +40,27 @@ internal class XMLParser(string input)
   /// Allowed tags from TextMeshPro rich text.
   /// </summary>
   private static readonly HashSet<string> AllowedTags = new(StringComparer.OrdinalIgnoreCase)
-        {
-          "b",
-          "i",
-          "u",
-          "s",
-          "color",
-          "size",
-          "align",
-          "font",
-          "material",
-          "sprite",
-          "quad",
-          "link",
-          "mark",
-          "sub",
-          "sup",
-          "br",
-          "noparse",
-          "rotate",
-          "voffset",
-        };
+  {
+    "b",
+    "i",
+    "u",
+    "s",
+    "color",
+    "size",
+    "align",
+    "font",
+    "material",
+    "sprite",
+    "quad",
+    "link",
+    "mark",
+    "sub",
+    "sup",
+    "br",
+    "noparse",
+    "rotate",
+    "voffset",
+  };
 
   /// <summary>
   /// Entry point: parse the entire input into a document node.
@@ -82,14 +85,10 @@ internal class XMLParser(string input)
           string closingName = PeekTagName();
           // If it's a valid allowed closing tag, let the caller handle it.
           if (closingName is not null && AllowedTags.Contains(closingName))
-          {
             break;
-          }
-          else
-          {
-            // Unknown closing tag: treat as literal.
-            nodes.Add(new RichTextNode() { Text = ConsumeUnknownTag() });
-          }
+
+          // Unknown closing tag: treat as literal.
+          nodes.Add(new RichTextNode() { Text = ConsumeUnknownTag() });
         }
         else
         {
@@ -127,9 +126,9 @@ internal class XMLParser(string input)
       }
     }
 
-    Plugin.Log.LogInfo($"Count: {nodes.Count}");
+    MelonLogger.Msg($"Count: {nodes.Count}");
     foreach (RichTextNode node in nodes)
-      Plugin.Log.LogInfo($"Node: {node.Text}");
+      MelonLogger.Msg($"Node: {node.Text}");
 
     return nodes;
   }
@@ -190,6 +189,7 @@ internal class XMLParser(string input)
   /// <summary>
   /// PeekTagNameFrom is similar to PeekTagName but starts at a given position.
   /// </summary>
+  /// <param name="position"></param>
   private string PeekTagNameFrom(int position)
   {
     int temp = position;
@@ -302,6 +302,7 @@ internal class XMLParser(string input)
   /// <summary>
   /// Attempts to consume a closing tag for the given tagName.
   /// </summary>
+  /// <param name="tagName"></param>
   private bool TryConsumeClosingTag(string tagName)
   {
     SkipWhitespace();
@@ -424,7 +425,7 @@ internal static class TextSegmentFlattener
     foreach (RichTextNode node in root.Children)
       FlattenNode(node, initialFormatting, segments);
 
-    Plugin.Log.LogInfo(segments);
+    MelonLogger.Msg(segments);
 
     return segments;
   }
@@ -509,10 +510,7 @@ internal static class TextSegmentFlattener
         1
       );
     }
-    else
-    {
-      return default;
-      // return new(1, 1, 1, 1); // Default to white
-    }
+
+    return default;
   }
 }

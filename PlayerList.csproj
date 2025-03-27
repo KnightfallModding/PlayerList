@@ -18,14 +18,15 @@
 
   <!-- Deployment properties (set these to your desired paths) -->
   <PropertyGroup>
-    <GameDir>/mnt/g/Decompiled/Knightfall</GameDir>
-    <PluginsPath>/mnt/g/Decompiled/Knightfall/BepInEx/plugins</PluginsPath>
-    <PluginPath>$(PluginsPath)/PlayerList</PluginPath>
+    <ModLink>https://github.com/KnightfallModding/PlayerList</ModLink>
+    <GameDir>/mnt/g/Decompiled/MelonKnightfall</GameDir>
+    <ModsPath>/mnt/g/Decompiled/MelonKnightfall/Mods</ModsPath>
+    <ModPath>$(ModsPath)/PlayerList</ModPath>
+    <LibsPath>$(GameDir)/UserLibs</LibsPath>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BepInEx.Unity.IL2CPP" Version="6.0.0-be.*" IncludeAssets="compile" />
-    <PackageReference Include="BepInEx.PluginInfoProps" Version="2.*" />
+    <PackageReference Include="LavaGang.MelonLoader" Version="0.7.0" />
     <PackageReference Include="roslynator.analyzers" Version="4.13.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
@@ -34,6 +35,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="Samboy063.Tomlet" Version="6.0.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -65,8 +67,8 @@
     <Reference Include="Il2cppmscorlib">
       <HintPath>libs/Il2cppmscorlib.dll</HintPath>
     </Reference>
-    <Reference Include="UniverseLib.BIE.IL2CPP.Interop">
-      <HintPath>libs/runtime/UniverseLib.BIE.IL2CPP.Interop.dll</HintPath>
+    <Reference Include="UniverseLib.ML.IL2CPP.Interop">
+      <HintPath>libs/runtime/UniverseLib.ML.IL2CPP.Interop.dll</HintPath>
     </Reference>
 
     <!-- Add Unity's core modules -->
@@ -84,18 +86,29 @@
     </Reference>
 
     <!-- Add networking modules -->
-    <Reference Include="Photon3Unity3D">
-      <HintPath>libs/Photon3Unity3D.dll</HintPath>
+    <Reference Include="Il2CppPhoton3Unity3D">
+      <HintPath>libs/Il2CppPhoton3Unity3D.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="PhotonRealtime">
-      <HintPath>libs/PhotonRealtime.dll</HintPath>
+    <Reference Include="Il2CppPhotonRealtime">
+      <HintPath>libs/Il2CppPhotonRealtime.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="PhotonUnityNetworking">
-      <HintPath>libs/PhotonUnityNetworking.dll</HintPath>
+    <Reference Include="Il2CppPhotonUnityNetworking">
+      <HintPath>libs/Il2CppPhotonUnityNetworking.dll</HintPath>
       <Private>False</Private>
     </Reference>
+
+    <!-- Add MelonLoader modules -->
+    <Reference Include="Il2CppInterop.Runtime">
+      <HintPath>libs/Il2CppInterop.Runtime.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Harmony">
+      <HintPath>libs/0Harmony.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+
   </ItemGroup>
 
   <!-- Item groups for deployment files -->
@@ -106,25 +119,33 @@
     <AssetFiles Include="assets/**" />
   </ItemGroup>
 
+  <!-- Post-compile target to mimic BepInEx.PluginInfoProps -->
+  <Target Name="BuildInfoProps" AfterTargets="Compile">
+    <WriteLinesToFile Overwrite="true" File="PlayerListModInfo.cs"
+      Lines="namespace PlayerList%3B&#xD;&#xA;&#xD;&#xA;public static class PlayerListModInfo&#xD;&#xA;{&#xD;&#xA;  public const string MOD_NAME = &quot;$(Product)&quot;%3B&#xD;&#xA;  public const string MOD_GUID = &quot;$(AssemblyName)&quot;%3B&#xD;&#xA;  public const string MOD_VERSION = &quot;$(Version)&quot;%3B&#xD;&#xA;  public const string MOD_AUTHOR = &quot;Aeryle&quot;%3B&#xD;&#xA;  public const string MOD_LINK = &quot;$(ModLink)&quot;%3B&#xD;&#xA;}&#xD;&#xA;" />
+  </Target>
+
   <!-- Post-build target to mimic build.fish -->
   <Target Name="DeployPlugin" AfterTargets="Build">
     <!-- Remove the old plugin directory -->
-    <RemoveDir Directories="$(PluginPath)" Condition="Exists('$(PluginPath)')" />
+    <RemoveDir Directories="$(ModPath)" Condition="Exists('$(ModPath)')" />
 
     <!-- Create necessary directories -->
-    <MakeDir Directories="$(PluginPath)/runtime" />
-    <MakeDir Directories="$(PluginPath)/assets" />
+    <!-- <MakeDir Directories="$(ModPath)/runtime" /> -->
+    <MakeDir Directories="$(ModPath)/assets" />
 
     <!-- Copy runtime DLLs -->
-    <Copy SourceFiles="@(RuntimeDlls)" DestinationFolder="$(PluginPath)/runtime" />
+    <Copy SourceFiles="@(RuntimeDlls)" DestinationFolder="$(LibsPath)" />
 
     <!-- Copy asset files (preserving folder structure relative to assets/) -->
-    <Copy SourceFiles="@(AssetFiles)" DestinationFiles="@(AssetFiles->'$(PluginPath)/assets/%(RecursiveDir)%(Filename)%(Extension)')" />
+    <Copy SourceFiles="@(AssetFiles)"
+      DestinationFiles="@(AssetFiles->'$(ModPath)/assets/%(RecursiveDir)%(Filename)%(Extension)')" />
 
     <!-- Copy main plugin DLL (assumes output is in release/$(TargetFramework)/) -->
-    <Copy SourceFiles="release/$(TargetFramework)/$(AssemblyName).dll" DestinationFolder="$(PluginPath)" />
+    <Copy SourceFiles="release/$(TargetFramework)/$(AssemblyName).dll"
+      DestinationFolder="$(ModsPath)" />
 
     <!-- Launch the game -->
-    <Exec Command="$(GameDir)/Knightfall.exe" />
+    <!-- <Exec Command="$(GameDir)/Knightfall.exe" /> -->
   </Target>
 </Project>

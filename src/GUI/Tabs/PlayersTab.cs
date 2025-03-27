@@ -55,11 +55,11 @@ internal static class PlayersTab
         if (prefixes.Length > 0)
         {
           ImGui.AlignTextToFramePadding();
-          ImGui.Text(prefixes);
           VerticalSeparator();
+          ImGui.Text(prefixes);
         }
 
-        ImGui.AlignTextToFramePadding();
+        // ImGui.AlignTextToFramePadding();
         DisplayUsername(player.Username);
 
         if (suffixes.Length > 0)
@@ -67,7 +67,6 @@ internal static class PlayersTab
           ImGui.AlignTextToFramePadding();
           VerticalSeparator();
           ImGui.Text(suffixes);
-          ImGui.NextColumn();
         }
       }
 
@@ -77,8 +76,10 @@ internal static class PlayersTab
 
   private static void DisplayUsername(List<TextSegment> usernameSegments)
   {
-    foreach (TextSegment segment in usernameSegments)
+    for (int i = 0; i < usernameSegments.Count; i++)
+    // foreach (TextSegment segment in usernameSegments)
     {
+      TextSegment segment = usernameSegments[i];
       ImFontPtr font = FontsManager.RegularFont;
 
       if (segment.Bold)
@@ -94,7 +95,9 @@ internal static class PlayersTab
 
       // TODO: Implement sprite to emoji
 
-      ImGui.SameLine(0, 0);
+      if (i > 0)
+        ImGui.SameLine(0, 0);
+
       if (segment.Color != default)
       {
         ImGui.TextColored(segment.Color, segment.Text);
@@ -123,10 +126,10 @@ internal static class PlayersTab
     string[] value = [];
     return CustomPlayers.Find(player => player.UUID == UUID)?.Prefixes ?? value;
   }
-  public static string GetUsername(Photon.Realtime.Player player, string UUID) => CustomPlayers.Find(player => player.UUID == UUID)?.Username?.Replace("{nickname}", player.NickName) ?? player.NickName;
+  public static string GetUsername(Il2CppPhoton.Realtime.Player player, string UUID) => CustomPlayers.Find(player => player.UUID == UUID)?.Username?.Replace("{nickname}", player.NickName) ?? player.NickName;
   public static string[] GetSuffixes(string UUID) => CustomPlayers.Find(player => player.UUID == UUID)?.Suffixes ?? System.Array.Empty<string>();
 
-  public static void Add(Photon.Realtime.Player player)
+  public static void Add(Il2CppPhoton.Realtime.Player player)
   {
     var UUID = default(string);
     try

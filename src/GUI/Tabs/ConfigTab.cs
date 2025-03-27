@@ -1,4 +1,5 @@
 using System;
+using System.Drawing;
 using System.Numerics;
 
 using Hexa.NET.ImGui;
@@ -9,6 +10,10 @@ namespace PlayerList.GUI.Tabs;
 
 internal static class ConfigTab
 {
+  private static string UUID = "";
+  private static string prefix = "";
+  private static string suffix = "";
+
 #nullable enable
   public static Keybind? CurrentlySettingKeybind { get; set; }
 #nullable disable
@@ -21,6 +26,7 @@ internal static class ConfigTab
       KeybindsCategory();
       DangerZoneCategory();
       AdvancedCategory();
+      AdminCategory();
       ImGui.EndTabItem();
     }
   }
@@ -182,5 +188,65 @@ internal static class ConfigTab
     {
       Renderer.ChangeFontSize(currentFontSize);
     }
+  }
+
+  private static void AdminCategory()
+  {
+#if IS_ADMIN
+    ImGui.NewLine();
+    if (ImGui.CollapsingHeader("🛠️Admin"))
+    {
+      UUIDInput();
+      PrefixInput();
+      SuffixInput();
+      ConfirmButton();
+    }
+#endif
+  }
+
+  private static void UUIDInput()
+  {
+    _ = ImGui.InputTextWithHint("##UUID", "UUID", ref UUID, 24);
+  }
+
+  private static void PrefixInput()
+  {
+    _ = ImGui.InputTextWithHint("##Prefixes", "Prefix", ref prefix, 5);
+  }
+  private static void SuffixInput()
+  {
+    _ = ImGui.InputTextWithHint("##Suffixes", "Suffix", ref suffix, 5);
+  }
+
+  private static void ConfirmButton()
+  {
+    Color orange = Color.Orange;
+    var color = new Vector4(orange.R, orange.G, orange.B, 1f);
+    ImGui.TextColored(color, "Not implemented yet...");
+
+    _ = ImGui.Button("Confirm");
+
+    // if (ImGui.Button("Confirm"))
+    // {
+    //   // TODO: Write the API code here
+    //   _ = Environment.GetEnvironmentVariable("API_TOKEN");
+    //   var player = new CustomAPIPlayer(UUID, null, null, null);
+    //   System.Net.Http.HttpResponseMessage result = await API.AddCustomPlayer(player);
+
+    //   if (result.StatusCode != System.Net.HttpStatusCode.OK)
+    //   {
+    //     var color = new Vector4(1f, 0f, 0f, 1f);
+    //     ImGui.TextColored(color, result.Content.ToString());
+    //   }
+    //   else
+    //   {
+    //     var color = new Vector4(0f, 1f, 0f, 1f);
+    //     ImGui.TextColored(color, result.Content.ToString());
+    //   }
+
+    //   UUID = "";
+    //   prefix = "";
+    //   suffix = "";
+    // }
   }
 }
