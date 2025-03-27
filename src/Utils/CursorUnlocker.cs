@@ -1,7 +1,9 @@
 // Found on https://github.com/Eveldee/NobetaTrainer/blob/master/NobetaTrainer/Behaviours/CursorUnlocker.cs (Credits where credits are due)
 
 using HarmonyLib;
+
 using MelonLoader;
+
 using UnityEngine;
 
 namespace PlayerList.Utils;
@@ -16,7 +18,7 @@ internal class CursorUnlocker : MonoBehaviour
 
   private static void Awake()
   {
-    MelonLogger.Msg("UnlockCursor Awake");
+    MelonDebug.Msg("UnlockCursor Awake");
 
     _lastLockMode = Cursor.lockState;
     _lastVisibleState = Cursor.visible;

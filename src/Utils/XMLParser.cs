@@ -126,9 +126,9 @@ internal class XMLParser(string input)
       }
     }
 
-    MelonLogger.Msg($"Count: {nodes.Count}");
+    MelonDebug.Msg($"Count: {nodes.Count}");
     foreach (RichTextNode node in nodes)
-      MelonLogger.Msg($"Node: {node.Text}");
+      MelonDebug.Msg($"Node: {node.Text}");
 
     return nodes;
   }
@@ -425,7 +425,7 @@ internal static class TextSegmentFlattener
     foreach (RichTextNode node in root.Children)
       FlattenNode(node, initialFormatting, segments);
 
-    MelonLogger.Msg(segments);
+    MelonDebug.Msg(segments);
 
     return segments;
   }

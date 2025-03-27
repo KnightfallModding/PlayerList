@@ -4,8 +4,6 @@ using HarmonyLib;
 
 using Il2CppPhoton.Pun;
 
-using MelonLoader;
-
 using PlayerList.GUI.Tabs;
 
 namespace PlayerList.Patches;
@@ -17,9 +15,6 @@ internal static class Il2CppPhotonHandlerPatch
   [HarmonyPostfix]
   private static void OnJoinedRoomPatch()
   {
-    for (int i = 0; i < 300; i++)
-      MelonLogger.Msg("Test");
-
     foreach (Il2CppPhoton.Realtime.Player player in PhotonNetwork.CurrentRoom.Players.Values)
       PlayersTab.Add(player);
   }

@@ -81,7 +81,7 @@ internal class Renderer : Overlay
     // TODO: Improve visibility detection instead of just focus.
     ProcessUtils.GameFocusChanged += static (_, @event) =>
     {
-      MelonLogger.Msg($"Window focus changed: {@event.IsFocused}.");
+      MelonDebug.Msg($"Window focus changed: {@event.IsFocused}.");
 
       CursorUnlocker.IsCursorUnlocked = @event.FocusedWindow == FocusedWindow.Overlay;
       IsVisible = @event.IsFocused;
