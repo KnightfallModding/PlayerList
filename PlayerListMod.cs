@@ -10,7 +10,7 @@ using PlayerList.Utils;
 
 using UnityEngine;
 
-[assembly: MelonInfo(typeof(PlayerListMod), PlayerListModInfo.MOD_NAME, PlayerListModInfo.MOD_VERSION, PlayerListModInfo.MOD_AUTHOR, $"{PlayerListModInfo.MOD_LINK}/releases/latest/download/{PlayerListModInfo.MOD_NAME}.zip")]
+[assembly: MelonInfo(typeof(PlayerListMod), PlayerListModInfo.MOD_NAME, PlayerListModInfo.MOD_VERSION, PlayerListModInfo.MOD_AUTHOR, $"{PlayerListModInfo.MOD_LINK}/releases/latest/download/Release.zip")]
 [assembly: MelonGame("Landfall Games", "Knightfall")]
 
 namespace PlayerList;
