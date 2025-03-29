@@ -29,18 +29,18 @@ internal static class API
 {
   private static readonly HttpClient Client = new();
 
-  private const string BaseURL = "https://knightfallbr.com/api/mods/" + PlayerListModInfo.MOD_GUID;
+  private static readonly string BaseURL = "https://knightfallbr.com/api/mods/" + PlayerListModInfo.MOD_GUID.Replace(".admin", "");
 
   public static async Task<List<APIPlayer>> FetchCustomPlayers()
   {
-    const string url = BaseURL + "/players";
+    string url = BaseURL + "/players";
 
     return await Client.GetFromJsonAsync<List<APIPlayer>>(url);
   }
 
   public static async Task<HttpResponseMessage> AddCustomPlayer(CustomAPIPlayer player)
   {
-    const string url = BaseURL + "/players";
+    string url = BaseURL + "/players";
 
     return await Client.PutAsJsonAsync(url, player);
   }
