@@ -31,11 +31,11 @@
 
   <ItemGroup>
     <PackageReference Include="LavaGang.MelonLoader" Version="0.7.0" />
-    <PackageReference Include="roslynator.analyzers" Version="4.13.0">
+    <PackageReference Include="Roslynator.Analyzers" Version="4.13.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="roslynator.formatting.analyzers" Version="4.13.0">
+    <PackageReference Include="Roslynator.Formatting.Analyzers" Version="4.13.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
@@ -129,13 +129,7 @@
       Lines="namespace PlayerList%3B&#xD;&#xA;&#xD;&#xA;public static class PlayerListModInfo&#xD;&#xA;{&#xD;&#xA;  public const string MOD_NAME = &quot;$(Product)&quot;%3B&#xD;&#xA;  public const string MOD_GUID = &quot;$(AssemblyName)&quot;%3B&#xD;&#xA;  public const string MOD_VERSION = &quot;$(Version)&quot;%3B&#xD;&#xA;  public const string MOD_AUTHOR = &quot;Aeryle&quot;%3B&#xD;&#xA;  public const string MOD_LINK = &quot;$(ModLink)&quot;%3B&#xD;&#xA;}&#xD;&#xA;" />
 
     <WriteLinesToFile Overwrite="true" File="SecretKeys.cs"
-      Lines="
-namespace PlayerList%3B
-
-internal static class SecretKeys
-{
-  public const string AdminToken = &quot;$(ADMIN_TOKEN)&quot;%3B
-}" />
+      Lines="namespace PlayerList%3B&#xD;&#xA;&#xD;&#xA;internal static class SecretKeys&#xD;&#xA;{&#xD;&#xA;  public const string AdminToken = &quot;$(ADMIN_TOKEN)&quot;%3B&#xD;&#xA;}&#xD;&#xA;" />
   </Target>
 
   <!-- Post-build target to mimic build.fish -->
