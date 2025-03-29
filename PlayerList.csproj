@@ -71,9 +71,6 @@
     <Reference Include="Il2cppmscorlib">
       <HintPath>libs/Il2cppmscorlib.dll</HintPath>
     </Reference>
-    <Reference Include="UniverseLib.ML.IL2CPP.Interop">
-      <HintPath>libs/runtime/UniverseLib.ML.IL2CPP.Interop.dll</HintPath>
-    </Reference>
 
     <!-- Add Unity's core modules -->
     <Reference Include="UnityEngine.CoreModule">
