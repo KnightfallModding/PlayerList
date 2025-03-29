@@ -55,8 +55,8 @@ internal static class PlayersTab
         if (prefixes.Length > 0)
         {
           ImGui.AlignTextToFramePadding();
-          VerticalSeparator();
           ImGui.Text(prefixes);
+          VerticalSeparator();
         }
 
         // ImGui.AlignTextToFramePadding();
@@ -113,6 +113,8 @@ internal static class PlayersTab
 
   private static void VerticalSeparator()
   {
+    ImGui.SameLine();
+    ImGui.Spacing();
     ImGui.SameLine();
     ImGui.AlignTextToFramePadding();
     ImGuiP.SeparatorEx(ImGuiSeparatorFlags.Vertical, 2f);
