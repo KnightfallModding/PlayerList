@@ -59,7 +59,7 @@ internal static class PlayersTab
           VerticalSeparator();
         }
 
-        // ImGui.AlignTextToFramePadding();
+        ImGui.AlignTextToFramePadding();
         DisplayUsername(player.Username);
 
         if (suffixes.Length > 0)
