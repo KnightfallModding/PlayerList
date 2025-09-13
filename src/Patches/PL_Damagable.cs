@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using HarmonyLib;
 using Il2Cpp;
+using Il2CppPhoton.Pun;
 using PlayerList.GUI.Tabs;
 
 namespace PlayerList.Patches;
@@ -12,6 +13,8 @@ internal static class DamageableEventPatch
   [HarmonyPostfix]
   private static void RPCA_Die(PL_Damagable __instance)
   {
+    if (PhotonNetwork.CurrentRoom.Name.Length != 5) return;
+
     var killedPlayer = __instance.damagable.player;
     PlayerHandler.TryGetTeam(killedPlayer.TeamID, out var team);
     var teamPlayers = team.Players.ToArray();
@@ -34,6 +37,4 @@ internal static class DamageableEventPatch
       details.Suffixes = details.Suffixes.Append("💀").ToArray();
     }
   }
-
-  private static void AddDeathEmoji() { }
 }
