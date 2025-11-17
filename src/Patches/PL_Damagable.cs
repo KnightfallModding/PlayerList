@@ -18,7 +18,7 @@ internal static class DamageableEventPatch
     var killedPlayer = __instance.damagable.player;
     PlayerHandler.TryGetTeam(killedPlayer.TeamID, out var team);
     var teamPlayers = team.Players.ToArray();
-    var teamWiped = teamPlayers.All(teammate => teammate.data.isGhost);
+    var teamWiped = teamPlayers.All(player => player.data.isGhost);
 
     if (teamWiped)
     {
@@ -27,7 +27,7 @@ internal static class DamageableEventPatch
         var details =
           PlayersTab.Players.Find(playerDetails => playerDetails.LocalId == player.refs.view.OwnerActorNr);
 
-        details.Suffixes = details.Suffixes.Where(prefix => prefix != "💀").Append("🏳️").ToArray();
+        details.Suffixes = details.Suffixes.Where(suffix => suffix != "💀").Append("🏳️").ToArray();
       }
     }
     else

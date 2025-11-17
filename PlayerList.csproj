@@ -23,14 +23,14 @@
   <!-- Deployment properties (set these to your desired paths) -->
   <PropertyGroup>
     <ModLink>https://github.com/KnightfallModding/PlayerList</ModLink>
-    <GameDir>/mnt/g/Decompiled/MelonKnightfall</GameDir>
-    <ModsPath>/mnt/g/Decompiled/MelonKnightfall/Mods</ModsPath>
+    <ModsPath>$(GameDir)/Mods</ModsPath>
     <ModPath>$(ModsPath)/PlayerList</ModPath>
     <LibsPath>$(GameDir)/UserLibs</LibsPath>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="LavaGang.MelonLoader" Version="0.7.0" />
+    <PackageReference Include="LaunchDarkly.EventSource" Version="5.2.0"/>
+    <PackageReference Include="LavaGang.MelonLoader" Version="0.7.0"/>
     <PackageReference Include="Roslynator.Analyzers" Version="4.13.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
@@ -39,11 +39,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Samboy063.Tomlet" Version="6.0.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Analyzer Include="./libs/HarmonyPatchAnalyzer.dll" />
+    <PackageReference Include="Samboy063.Tomlet" Version="6.0.0"/>
   </ItemGroup>
 
   <ItemGroup>
@@ -73,6 +69,10 @@
     </Reference>
 
     <!-- Add Unity's core modules -->
+    <Reference Include="UnityEngine.AssetBundleModule">
+      <HintPath>libs/UnityEngine.AssetBundleModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>libs/UnityEngine.CoreModule.dll</HintPath>
       <Private>False</Private>
@@ -109,45 +109,43 @@
       <HintPath>libs/0Harmony.dll</HintPath>
       <Private>False</Private>
     </Reference>
-
   </ItemGroup>
 
   <!-- Item groups for deployment files -->
   <ItemGroup>
     <!-- Runtime DLLs from libs/runtime -->
-    <RuntimeDlls Include="libs/runtime/*.dll" />
+    <RuntimeDlls Include="libs/runtime/*.dll"/>
     <!-- All files from assets folder (recursively) -->
-    <AssetFiles Include="assets/**" />
+    <AssetFiles Include="assets/**"/>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="libs/runtime/"/>
   </ItemGroup>
 
   <Target Name="BuildCustomFiles" BeforeTargets="Build">
     <!-- Mimic BepInEx.PluginInfoProps -->
-    <WriteLinesToFile Overwrite="true" File="PlayerListModInfo.cs"
-      Lines="namespace PlayerList%3B&#xD;&#xA;&#xD;&#xA;public static class PlayerListModInfo&#xD;&#xA;{&#xD;&#xA;  public const string MOD_NAME = &quot;$(Product)&quot;%3B&#xD;&#xA;  public const string MOD_GUID = &quot;$(AssemblyName)&quot;%3B&#xD;&#xA;  public const string MOD_VERSION = &quot;$(Version)&quot;%3B&#xD;&#xA;  public const string MOD_AUTHOR = &quot;Aeryle&quot;%3B&#xD;&#xA;  public const string MOD_LINK = &quot;$(ModLink)&quot;%3B&#xD;&#xA;}&#xD;&#xA;" />
+    <WriteLinesToFile Overwrite="true" File="PlayerListModInfo.cs" Lines="namespace PlayerList%3B&#xD;&#xA;&#xD;&#xA;public static class PlayerListModInfo&#xD;&#xA;{&#xD;&#xA;  public const string MOD_NAME = &quot;$(Product)&quot;%3B&#xD;&#xA;  public const string MOD_GUID = &quot;$(AssemblyName)&quot;%3B&#xD;&#xA;  public const string MOD_VERSION = &quot;$(Version)&quot;%3B&#xD;&#xA;  public const string MOD_AUTHOR = &quot;Aeryle&quot;%3B&#xD;&#xA;  public const string MOD_LINK = &quot;$(ModLink)&quot;%3B&#xD;&#xA;}&#xD;&#xA;"/>
 
-    <WriteLinesToFile Overwrite="true" File="SecretKeys.cs"
-      Lines="namespace PlayerList%3B&#xD;&#xA;&#xD;&#xA;internal static class SecretKeys&#xD;&#xA;{&#xD;&#xA;  public const string AdminToken = &quot;$(ADMIN_TOKEN)&quot;%3B&#xD;&#xA;}&#xD;&#xA;" />
+    <WriteLinesToFile Overwrite="true" File="SecretKeys.cs" Lines="namespace PlayerList%3B&#xD;&#xA;&#xD;&#xA;internal static class SecretKeys&#xD;&#xA;{&#xD;&#xA;  public const string AdminToken = &quot;$(ADMIN_TOKEN)&quot;%3B&#xD;&#xA;}&#xD;&#xA;"/>
   </Target>
 
   <!-- Post-build target to mimic build.fish -->
   <Target Name="DeployPlugin">
     <!-- Remove the old plugin directory -->
-    <RemoveDir Directories="$(ModPath)" Condition="Exists('$(ModPath)')" />
+    <RemoveDir Directories="$(ModPath)" Condition="Exists('$(ModPath)')"/>
 
     <!-- Create necessary directories -->
     <!-- <MakeDir Directories="$(ModPath)/runtime" /> -->
-    <MakeDir Directories="$(ModPath)/assets" />
+    <MakeDir Directories="$(ModPath)/assets"/>
 
     <!-- Copy runtime DLLs -->
-    <Copy SourceFiles="@(RuntimeDlls)" DestinationFolder="$(LibsPath)" />
+    <Copy SourceFiles="@(RuntimeDlls)" DestinationFolder="$(LibsPath)"/>
 
     <!-- Copy asset files (preserving folder structure relative to assets/) -->
-    <Copy SourceFiles="@(AssetFiles)"
-      DestinationFiles="@(AssetFiles->'$(ModPath)/assets/%(RecursiveDir)%(Filename)%(Extension)')" />
+    <Copy SourceFiles="@(AssetFiles)" DestinationFiles="@(AssetFiles->'$(ModPath)/assets/%(RecursiveDir)%(Filename)%(Extension)')"/>
 
     <!-- Copy main plugin DLL (assumes output is in release/$(TargetFramework)/) -->
-    <Copy SourceFiles="release/$(TargetFramework)/$(AssemblyName).dll"
-      DestinationFolder="$(ModsPath)" />
+    <Copy SourceFiles="release/$(TargetFramework)/$(AssemblyName).dll" DestinationFolder="$(ModsPath)"/>
 
     <!-- Launch the game -->
     <!-- <Exec Command="$(GameDir)/Knightfall.exe" /> -->

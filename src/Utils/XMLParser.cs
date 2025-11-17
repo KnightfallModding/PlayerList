@@ -1,376 +1,26 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Globalization;
 
 using MelonLoader;
 
 namespace PlayerList.Utils;
 
 /// <summary>
-/// Represents a node in the rich text tree.
+/// Represents a parsed rich text tag with its attributes and content.
 /// </summary>
-internal class RichTextNode
+internal class RichTextTag
 {
-  /// <summary>
-  /// For allowed tags like &quot;b&quot;, &quot;i&quot;, &quot;color&quot;, etc.
-  /// </summary>
-  public string Tag { get; set; }
-  /// <summary>
-  /// e.g. for &lt;color=#ffffff&gt;, holds &quot;#ffffff&quot;
-  /// </summary>
-  public string Attribute { get; set; }
-  public List<RichTextNode> Children { get; set; } = [];
-  /// <summary>
-  /// Non-null for text nodes
-  /// </summary>
-  public string Text { get; set; }
+  public string Name { get; set; }
+  public Dictionary<string, string> Attributes { get; set; } = new();
+  public string Value { get; set; } // Primary value for simple tags like <color=red>
+  public bool IsSelfClosing { get; set; }
+  public bool IsClosing { get; set; }
 }
 
 /// <summary>
-/// The safe parser builds a tree from the input.
-/// If a tag is not allowed, its entire span is consumed as literal text.
-/// </summary>
-/// <param name="input"></param>
-internal class XMLParser(string input)
-{
-  private readonly string input = input;
-  private int pos;
-
-  /// <summary>
-  /// Allowed tags from TextMeshPro rich text.
-  /// </summary>
-  private static readonly HashSet<string> AllowedTags = new(StringComparer.OrdinalIgnoreCase)
-  {
-    "b",
-    "i",
-    "u",
-    "s",
-    "color",
-    "size",
-    "align",
-    "font",
-    "material",
-    "sprite",
-    "quad",
-    "link",
-    "mark",
-    "sub",
-    "sup",
-    "br",
-    "noparse",
-    "rotate",
-    "voffset",
-  };
-
-  /// <summary>
-  /// Entry point: parse the entire input into a document node.
-  /// </summary>
-  public List<TextSegment> Parse() => TextSegmentFlattener.Flatten(new() { Children = ParseNodes() });
-
-  /// <summary>
-  /// ParseNodes reads a sequence of nodes until end of input or a valid closing tag.
-  /// </summary>
-  private List<RichTextNode> ParseNodes()
-  {
-    var nodes = new List<RichTextNode>();
-
-    while (pos < input.Length)
-    {
-      if (input[pos] == '<')
-      {
-        // Check if this is a closing tag.
-        if (pos + 1 < input.Length && input[pos + 1] == '/')
-        {
-          // Peek the tag name.
-          string closingName = PeekTagName();
-          // If it's a valid allowed closing tag, let the caller handle it.
-          if (closingName is not null && AllowedTags.Contains(closingName))
-            break;
-
-          // Unknown closing tag: treat as literal.
-          nodes.Add(new RichTextNode() { Text = ConsumeUnknownTag() });
-        }
-        else
-        {
-          // Peek tag name of the opening tag.
-          string tagName = PeekTagName();
-          if (tagName is not null && AllowedTags.Contains(tagName))
-          {
-            // Parse the allowed element.
-            RichTextNode element = ParseElement();
-            if (element is not null)
-            {
-              nodes.Add(element);
-            }
-            else
-            {
-              // Fallback: treat as literal.
-              nodes.Add(new RichTextNode() { Text = ConsumeUnknownTag() });
-            }
-          }
-          else
-          {
-            // Unknown tag – consume the entire tag (and if possible its closing pair) as literal.
-            nodes.Add(new RichTextNode() { Text = ConsumeUnknownTag() });
-          }
-        }
-      }
-      else
-      {
-        // Regular text: consume until the next '<'
-        int start = pos;
-        while (pos < input.Length && input[pos] != '<')
-          pos++;
-
-        nodes.Add(new RichTextNode() { Text = input[start..pos] });
-      }
-    }
-
-    MelonDebug.Msg($"Count: {nodes.Count}");
-    foreach (RichTextNode node in nodes)
-      MelonDebug.Msg($"Node: {node.Text}");
-
-    return nodes;
-  }
-
-  /// <summary>
-  /// PeekTagName reads a tag name without advancing pos.
-  /// It looks past '<' and an optional '/'.
-  /// </summary>
-  private string PeekTagName()
-  {
-    int temp = pos;
-
-    if (temp >= input.Length || input[temp] != '<')
-      return null;
-
-    temp++; // skip '<'
-
-    if (temp < input.Length && input[temp] == '/')
-      temp++; // skip '/'
-
-    int start = temp;
-    while (temp < input.Length && char.IsLetterOrDigit(input[temp]))
-      temp++;
-
-    if (start == temp)
-      return null;
-
-    return input[start..temp];
-  }
-
-  /// <summary>
-  /// ConsumeUnknownTag consumes the entire tag (and its matching closing tag if present) as literal text.
-  /// It returns the literal substring.
-  /// </summary>
-  private string ConsumeUnknownTag()
-  {
-    int start = pos;
-    // First, consume until the end of the current tag.
-    while (pos < input.Length && input[pos] != '>')
-      pos++;
-
-    if (pos < input.Length)
-      pos++; // consume '>'
-
-    // If this is an opening tag, try to find the matching closing tag.
-    string tagName = PeekTagNameFrom(start);
-    if (!string.IsNullOrEmpty(tagName))
-    {
-      // Look ahead for a matching closing tag.
-      string closingTag = "</" + tagName + ">";
-      int closingIndex = input.IndexOf(closingTag, pos, StringComparison.OrdinalIgnoreCase);
-      if (closingIndex != -1)
-        pos = closingIndex + closingTag.Length;
-    }
-    return input[start..pos];
-  }
-
-  /// <summary>
-  /// PeekTagNameFrom is similar to PeekTagName but starts at a given position.
-  /// </summary>
-  /// <param name="position"></param>
-  private string PeekTagNameFrom(int position)
-  {
-    int temp = position;
-    if (temp >= input.Length || input[temp] != '<')
-      return null;
-
-    temp++; // skip '<'
-    if (temp < input.Length && input[temp] == '/')
-      temp++; // skip '/'
-
-    int start = temp;
-    while (temp < input.Length && char.IsLetterOrDigit(input[temp]))
-      temp++;
-
-    if (start == temp)
-      return null;
-
-    return input[start..temp];
-  }
-
-  /// <summary>
-  /// ParseElement parses an allowed element (whose tag is in AllowedTags).
-  /// </summary>
-  private RichTextNode ParseElement()
-  {
-    int originalPos = pos;
-    if (pos >= input.Length || input[pos] != '<')
-      return null;
-
-    pos++; // Skip '<'
-
-    // Parse tag name.
-    int tagNameStart = pos;
-    while (pos < input.Length && char.IsLetterOrDigit(input[pos]))
-      pos++;
-
-    string tagName = input[tagNameStart..pos];
-    // (At this point we expect tagName is allowed.)
-    // Skip whitespace.
-    SkipWhitespace();
-
-    string attributeValue = null;
-    if (pos < input.Length && input[pos] == '=')
-    {
-      pos++; // Skip '='
-      SkipWhitespace();
-      attributeValue = (pos < input.Length && input[pos] == '\"') ? ParseQuotedValue() : ParseUnquotedValue();
-      SkipWhitespace();
-    }
-
-    var selfClosing = false;
-    if (pos < input.Length && input[pos] == '/')
-    {
-      selfClosing = true;
-      pos++;
-    }
-
-    if (pos >= input.Length || input[pos] != '>')
-    {
-      // If malformed, revert and treat as literal.
-      pos = originalPos;
-      return null;
-    }
-    pos++; // Skip '>'
-
-    var node = new RichTextNode() { Tag = tagName, Attribute = attributeValue };
-
-    if (selfClosing || tagName.Equals("br", StringComparison.OrdinalIgnoreCase))
-      return node;
-
-    // Special handling for <noparse>
-    if (tagName.Equals("noparse", StringComparison.OrdinalIgnoreCase))
-    {
-      int contentStart = pos;
-      while (pos < input.Length)
-      {
-        if (input[pos] == '<' && pos + 1 < input.Length && input[pos + 1] == '/')
-        {
-          string closingName = PeekTagName();
-          if (closingName?.Equals("noparse", StringComparison.OrdinalIgnoreCase) == true)
-            break;
-        }
-        pos++;
-      }
-      node.Children.Add(new RichTextNode() { Text = input[contentStart..pos] });
-      _ = TryConsumeClosingTag(tagName);
-      return node;
-    }
-
-    // Parse inner content.
-    node.Children = ParseNodes();
-    if (pos < input.Length && input[pos] == '<' && pos + 1 < input.Length && input[pos + 1] == '/')
-    {
-      if (!TryConsumeClosingTag(tagName))
-      {
-        // If closing tag not properly consumed, revert.
-        pos = originalPos;
-        return null;
-      }
-    }
-    else
-    {
-      // If no closing tag found, revert.
-      pos = originalPos;
-      return null;
-    }
-    return node;
-  }
-
-  /// <summary>
-  /// Attempts to consume a closing tag for the given tagName.
-  /// </summary>
-  /// <param name="tagName"></param>
-  private bool TryConsumeClosingTag(string tagName)
-  {
-    SkipWhitespace();
-    if (pos >= input.Length || input[pos] != '<')
-      return false;
-
-    int temp = pos;
-    temp++; // Skip '<'
-    if (temp >= input.Length || input[temp] != '/')
-      return false;
-
-    temp++; // Skip '/'
-    int nameStart = temp;
-    while (temp < input.Length && char.IsLetterOrDigit(input[temp]))
-      temp++;
-
-    string closingName = input.Substring(nameStart, temp - nameStart);
-    if (!closingName.Equals(tagName, StringComparison.OrdinalIgnoreCase))
-      return false;
-
-    SkipWhitespaceAt(ref temp);
-    if (temp >= input.Length || input[temp] != '>')
-      return false;
-
-    temp++; // Skip '>'
-    pos = temp;
-    return true;
-  }
-
-  private string ParseQuotedValue()
-  {
-    pos++; // Skip opening quote
-    int start = pos;
-    while (pos < input.Length && input[pos] != '\"')
-      pos++;
-
-    if (pos >= input.Length)
-      return null;
-
-    string value = input[start..pos];
-    pos++; // Skip closing quote
-    return value;
-  }
-
-  private string ParseUnquotedValue()
-  {
-    int start = pos;
-    while (pos < input.Length && !char.IsWhiteSpace(input[pos]) && input[pos] != '>')
-      pos++;
-
-    return input.Substring(start, pos - start);
-  }
-
-  private void SkipWhitespace()
-  {
-    while (pos < input.Length && char.IsWhiteSpace(input[pos]))
-      pos++;
-  }
-
-  private void SkipWhitespaceAt(ref int position)
-  {
-    while (position < input.Length && char.IsWhiteSpace(input[position]))
-      position++;
-  }
-}
-
-/// <summary>
-/// A flat text segment with formatting properties.
+/// Represents a segment of formatted text.
 /// </summary>
 internal class TextSegment
 {
@@ -379,30 +29,44 @@ internal class TextSegment
   public bool Italic { get; set; }
   public bool Underline { get; set; }
   public bool Strikethrough { get; set; }
-  public Vector4 Color { get; set; }
-  public string Size { get; set; }
+  public Vector4 Color { get; set; } = new(1, 1, 1, 1);
+  public float Size { get; set; } = 1.0f;
+  public string Align { get; set; }
+  public float Alpha { get; set; } = 1.0f;
+  public string Font { get; set; }
   public int Rotate { get; set; }
+  public float VOffset { get; set; }
+  public bool Uppercase { get; set; }
+  public bool Lowercase { get; set; }
+  public bool SmallCaps { get; set; }
 
   public override string ToString()
   {
-    return $"\"{Text}\" (Bold: {Bold}, Italic: {Italic}, Underline: {Underline}, Strikethrough: {Strikethrough}, Color: {Color}, Size: {Size}, Rotate={Rotate})";
+    return $"\"{Text}\" (B:{Bold}, I:{Italic}, U:{Underline}, S:{Strikethrough}, Color:{Color}, Size:{Size}, Alpha:{Alpha})";
   }
 }
 
 /// <summary>
-/// Tracks active formatting.
+/// Active formatting state stack for nested tags.
 /// </summary>
-internal class Formatting
+internal class FormattingState
 {
   public bool Bold { get; set; }
   public bool Italic { get; set; }
   public bool Underline { get; set; }
   public bool Strikethrough { get; set; }
-  public Vector4 Color { get; set; }
-  public string Size { get; set; }
+  public Vector4 Color { get; set; } = new(1, 1, 1, 1);
+  public float Size { get; set; } = 1.0f;
+  public string Align { get; set; }
+  public float Alpha { get; set; } = 1.0f;
+  public string Font { get; set; }
   public int Rotate { get; set; }
+  public float VOffset { get; set; }
+  public bool Uppercase { get; set; }
+  public bool Lowercase { get; set; }
+  public bool SmallCaps { get; set; }
 
-  public Formatting Clone() => new()
+  public FormattingState Clone() => new()
   {
     Bold = Bold,
     Italic = Italic,
@@ -410,107 +74,625 @@ internal class Formatting
     Strikethrough = Strikethrough,
     Color = Color,
     Size = Size,
+    Align = Align,
+    Alpha = Alpha,
+    Font = Font,
+    Rotate = Rotate,
+    VOffset = VOffset,
+    Uppercase = Uppercase,
+    Lowercase = Lowercase,
+    SmallCaps = SmallCaps
   };
 }
 
 /// <summary>
-/// Flattens the nested RichTextNode tree into a flat list of TextSegment objects.
+/// TextMeshPro-compatible rich text parser.
+/// Matches TMP's parsing behavior as closely as possible.
 /// </summary>
-internal static class TextSegmentFlattener
+internal class XMLParser
 {
-  public static List<TextSegment> Flatten(RichTextNode root)
+  private readonly string input;
+  private int pos;
+  
+  /// <summary>
+  /// All supported TextMeshPro rich text tags.
+  /// Based on TMP documentation and common usage patterns.
+  /// </summary>
+  private static readonly HashSet<string> SupportedTags = new(StringComparer.OrdinalIgnoreCase)
+  {
+    "align", "allcaps", "alpha", "b", "br", "color", "cspace", "font", "font-weight",
+    "gradient", "i", "indent", "line-height", "line-indent", "link", "lowercase",
+    "margin", "mark", "mspace", "noparse", "nobr", "page", "pos", "rotate",
+    "s", "size", "smallcaps", "space", "sprite", "style", "sub", "sup",
+    "u", "uppercase", "voffset", "width", "material", "quad"
+  };
+
+  /// <summary>
+  /// Tags that are self-closing and don't require end tags.
+  /// </summary>
+  private static readonly HashSet<string> SelfClosingTags = new(StringComparer.OrdinalIgnoreCase)
+  {
+    "br", "sprite", "quad", "space", "page"
+  };
+
+  public XMLParser(string text)
+  {
+    input = text ?? "";
+    pos = 0;
+  }
+
+  /// <summary>
+  /// Parse the input text into formatted text segments.
+  /// </summary>
+  public List<TextSegment> Parse()
   {
     var segments = new List<TextSegment>();
-    var initialFormatting = new Formatting();
-    foreach (RichTextNode node in root.Children)
-      FlattenNode(node, initialFormatting, segments);
-
-    MelonDebug.Msg(segments);
+    var stateStack = new Stack<FormattingState>();
+    var currentState = new FormattingState();
+    
+    pos = 0;
+    
+    while (pos < input.Length)
+    {
+      if (input[pos] == '<')
+      {
+        var tag = ParseTag();
+        if (tag != null && SupportedTags.Contains(tag.Name))
+        {
+          ProcessTag(tag, currentState, stateStack);
+        }
+        else
+        {
+          // Invalid or unsupported tag - treat as literal text
+          segments.Add(CreateSegment("<", currentState));
+          pos++;
+        }
+      }
+      else
+      {
+        // Regular text
+        var text = ParseText();
+        if (!string.IsNullOrEmpty(text))
+        {
+          segments.Add(CreateSegment(text, currentState));
+        }
+      }
+    }
 
     return segments;
   }
 
-  private static void FlattenNode(RichTextNode node, Formatting current, List<TextSegment> segments)
+  /// <summary>
+  /// Parse a tag starting at current position.
+  /// </summary>
+  private RichTextTag ParseTag()
   {
-    // If node is text, add a segment.
-    if (!string.IsNullOrEmpty(node.Text))
+    if (pos >= input.Length || input[pos] != '<')
+      return null;
+
+    int startPos = pos;
+    pos++; // Skip '<'
+
+    // Check for closing tag
+    bool isClosing = false;
+    if (pos < input.Length && input[pos] == '/')
     {
-      segments.Add(new TextSegment()
-      {
-        Text = node.Text,
-        Bold = current.Bold,
-        Italic = current.Italic,
-        Underline = current.Underline,
-        Strikethrough = current.Strikethrough,
-        Color = current.Color,
-        Size = current.Size,
-        Rotate = current.Rotate,
-      });
+      isClosing = true;
+      pos++;
     }
 
-    // Update formatting based on allowed tags.
-    Formatting newFormatting = current.Clone();
-    if (!string.IsNullOrEmpty(node.Tag))
+    // Parse tag name
+    int nameStart = pos;
+    while (pos < input.Length && IsTagNameChar(input[pos]))
+      pos++;
+
+    if (nameStart == pos)
     {
-      switch (node.Tag.ToLower())
+      // No valid tag name
+      pos = startPos;
+      return null;
+    }
+
+    string tagName = input[nameStart..pos];
+    
+    var tag = new RichTextTag
+    {
+      Name = tagName,
+      IsClosing = isClosing
+    };
+
+    if (!isClosing)
+    {
+      SkipWhitespace();
+      
+      // Parse attributes
+      if (pos < input.Length && input[pos] == '=')
       {
-        case "b":
-          newFormatting.Bold = true;
-          break;
-        case "i":
-          newFormatting.Italic = true;
-          break;
-        case "u":
-          newFormatting.Underline = true;
-          break;
-        case "s":
-          newFormatting.Strikethrough = true;
-          break;
-        case "color":
-          newFormatting.Color = ParseColor(node.Attribute);
-          break;
-        case "size":
-          newFormatting.Size = node.Attribute;
-          break;
-        case "rotate":
-          newFormatting.Rotate = int.Parse(node.Attribute);
-          break;
-          // Add other allowed tags as needed.
+        // Simple value: <color=red>
+        pos++; // Skip '='
+        SkipWhitespace();
+        string value = ParseAttributeValue();
+        if (value != null)
+        {
+          tag.Value = value;
+          tag.Attributes["value"] = value;
+        }
+      }
+      else
+      {
+        // Named attributes: <gradient from="red" to="blue">
+        while (pos < input.Length && input[pos] != '>' && input[pos] != '/')
+        {
+          SkipWhitespace();
+          if (pos >= input.Length || input[pos] == '>' || input[pos] == '/')
+            break;
+
+          // Parse attribute name
+          int attrStart = pos;
+          while (pos < input.Length && IsTagNameChar(input[pos]))
+            pos++;
+
+          if (attrStart == pos)
+            break;
+
+          string attrName = input[attrStart..pos];
+          SkipWhitespace();
+
+          if (pos < input.Length && input[pos] == '=')
+          {
+            pos++; // Skip '='
+            SkipWhitespace();
+            string attrValue = ParseAttributeValue();
+            if (attrValue != null)
+              tag.Attributes[attrName] = attrValue;
+          }
+          else
+          {
+            // Boolean attribute
+            tag.Attributes[attrName] = "true";
+          }
+        }
+      }
+
+      SkipWhitespace();
+
+      // Check for self-closing
+      if (pos < input.Length && input[pos] == '/')
+      {
+        tag.IsSelfClosing = true;
+        pos++;
+        SkipWhitespace();
       }
     }
 
-    foreach (RichTextNode child in node.Children)
-      FlattenNode(child, newFormatting, segments);
+    // Expect closing '>'
+    if (pos >= input.Length || input[pos] != '>')
+    {
+      pos = startPos;
+      return null;
+    }
+
+    pos++; // Skip '>'
+    return tag;
   }
 
-  public static Vector4 ParseColor(string color)
+  /// <summary>
+  /// Parse regular text until next tag.
+  /// </summary>
+  private string ParseText()
   {
-    return color switch
+    int start = pos;
+    while (pos < input.Length && input[pos] != '<')
+      pos++;
+    
+    return start < pos ? input[start..pos] : "";
+  }
+
+  /// <summary>
+  /// Parse an attribute value (quoted or unquoted).
+  /// </summary>
+  private string ParseAttributeValue()
+  {
+    if (pos >= input.Length)
+      return null;
+
+    if (input[pos] == '"')
     {
-      "black" => new(0, 0, 0, 1),
-      "blue" => new(0, 0, 1, 1),
-      "green" => new(0, 1, 0, 1),
-      "orange" => new(1, 0.647f, 0, 1),
-      "purple" => new(0.502f, 0, 0.502f, 1),
-      "red" => new(1, 0, 0, 1),
-      _ => ParseColorFallback(color)
+      // Quoted value
+      pos++; // Skip opening quote
+      int start = pos;
+      while (pos < input.Length && input[pos] != '"')
+        pos++;
+      
+      if (pos >= input.Length)
+        return null; // Unclosed quote
+      
+      string value = input[start..pos];
+      pos++; // Skip closing quote
+      return value;
+    }
+    else
+    {
+      // Unquoted value
+      int start = pos;
+      while (pos < input.Length && !char.IsWhiteSpace(input[pos]) && input[pos] != '>' && input[pos] != '/')
+        pos++;
+      
+      return start < pos ? input[start..pos] : null;
+    }
+  }
+
+  /// <summary>
+  /// Process a parsed tag and update formatting state.
+  /// </summary>
+  private void ProcessTag(RichTextTag tag, FormattingState currentState, Stack<FormattingState> stateStack)
+  {
+    if (tag.IsClosing)
+    {
+      // Handle closing tag - restore previous state if available
+      if (stateStack.Count > 0)
+      {
+        var previousState = stateStack.Pop();
+        RestoreStateForTag(tag.Name, currentState, previousState);
+      }
+      else
+      {
+        // No previous state - reset to default for this tag
+        ResetTagState(tag.Name, currentState);
+      }
+    }
+    else
+    {
+      // Opening tag - save current state and apply new formatting
+      if (!tag.IsSelfClosing && !SelfClosingTags.Contains(tag.Name))
+      {
+        stateStack.Push(currentState.Clone());
+      }
+      
+      ApplyTag(tag, currentState);
+    }
+  }
+
+  /// <summary>
+  /// Apply tag formatting to current state.
+  /// </summary>
+  private void ApplyTag(RichTextTag tag, FormattingState state)
+  {
+    switch (tag.Name.ToLower())
+    {
+      case "b":
+        state.Bold = true;
+        break;
+      case "i":
+        state.Italic = true;
+        break;
+      case "u":
+        state.Underline = true;
+        break;
+      case "s":
+        state.Strikethrough = true;
+        break;
+      case "color":
+        if (!string.IsNullOrEmpty(tag.Value))
+          state.Color = ParseColor(tag.Value);
+        break;
+      case "size":
+        if (!string.IsNullOrEmpty(tag.Value))
+          state.Size = ParseSize(tag.Value);
+        break;
+      case "alpha":
+        if (!string.IsNullOrEmpty(tag.Value))
+          state.Alpha = ParseAlpha(tag.Value);
+        break;
+      case "align":
+        state.Align = tag.Value;
+        break;
+      case "font":
+        state.Font = tag.Value;
+        break;
+      case "rotate":
+        if (!string.IsNullOrEmpty(tag.Value) && int.TryParse(tag.Value, out int rotation))
+          state.Rotate = rotation;
+        break;
+      case "voffset":
+        if (!string.IsNullOrEmpty(tag.Value) && float.TryParse(tag.Value, out float offset))
+          state.VOffset = offset;
+        break;
+      case "uppercase":
+      case "allcaps":
+        state.Uppercase = true;
+        break;
+      case "lowercase":
+        state.Lowercase = true;
+        break;
+      case "smallcaps":
+        state.SmallCaps = true;
+        break;
+    }
+  }
+
+  /// <summary>
+  /// Restore specific tag state from previous formatting.
+  /// </summary>
+  private void RestoreStateForTag(string tagName, FormattingState current, FormattingState previous)
+  {
+    switch (tagName.ToLower())
+    {
+      case "b":
+        current.Bold = previous.Bold;
+        break;
+      case "i":
+        current.Italic = previous.Italic;
+        break;
+      case "u":
+        current.Underline = previous.Underline;
+        break;
+      case "s":
+        current.Strikethrough = previous.Strikethrough;
+        break;
+      case "color":
+        current.Color = previous.Color;
+        break;
+      case "size":
+        current.Size = previous.Size;
+        break;
+      case "alpha":
+        current.Alpha = previous.Alpha;
+        break;
+      case "align":
+        current.Align = previous.Align;
+        break;
+      case "font":
+        current.Font = previous.Font;
+        break;
+      case "rotate":
+        current.Rotate = previous.Rotate;
+        break;
+      case "voffset":
+        current.VOffset = previous.VOffset;
+        break;
+      case "uppercase":
+      case "allcaps":
+        current.Uppercase = previous.Uppercase;
+        break;
+      case "lowercase":
+        current.Lowercase = previous.Lowercase;
+        break;
+      case "smallcaps":
+        current.SmallCaps = previous.SmallCaps;
+        break;
+    }
+  }
+
+  /// <summary>
+  /// Reset specific tag state to default.
+  /// </summary>
+  private void ResetTagState(string tagName, FormattingState state)
+  {
+    switch (tagName.ToLower())
+    {
+      case "b":
+        state.Bold = false;
+        break;
+      case "i":
+        state.Italic = false;
+        break;
+      case "u":
+        state.Underline = false;
+        break;
+      case "s":
+        state.Strikethrough = false;
+        break;
+      case "color":
+        state.Color = new Vector4(1, 1, 1, 1);
+        break;
+      case "size":
+        state.Size = 1.0f;
+        break;
+      case "alpha":
+        state.Alpha = 1.0f;
+        break;
+      case "align":
+        state.Align = null;
+        break;
+      case "font":
+        state.Font = null;
+        break;
+      case "rotate":
+        state.Rotate = 0;
+        break;
+      case "voffset":
+        state.VOffset = 0;
+        break;
+      case "uppercase":
+      case "allcaps":
+        state.Uppercase = false;
+        break;
+      case "lowercase":
+        state.Lowercase = false;
+        break;
+      case "smallcaps":
+        state.SmallCaps = false;
+        break;
+    }
+  }
+
+  /// <summary>
+  /// Create a text segment with current formatting.
+  /// </summary>
+  private TextSegment CreateSegment(string text, FormattingState state)
+  {
+    // Apply text case transformations
+    if (state.Uppercase)
+      text = text.ToUpper();
+    else if (state.Lowercase)
+      text = text.ToLower();
+    // Note: SmallCaps would need special handling in rendering
+
+    return new TextSegment
+    {
+      Text = text,
+      Bold = state.Bold,
+      Italic = state.Italic,
+      Underline = state.Underline,
+      Strikethrough = state.Strikethrough,
+      Color = state.Color,
+      Size = state.Size,
+      Align = state.Align,
+      Alpha = state.Alpha,
+      Font = state.Font,
+      Rotate = state.Rotate,
+      VOffset = state.VOffset,
+      Uppercase = state.Uppercase,
+      Lowercase = state.Lowercase,
+      SmallCaps = state.SmallCaps
     };
   }
 
-  private static Vector4 ParseColorFallback(string color)
+  /// <summary>
+  /// Parse color value - supports named colors, hex values, and RGB.
+  /// </summary>
+  private Vector4 ParseColor(string colorValue)
   {
-    if (color.StartsWith("#"))
-    {
-      byte[] parsedColor = Convert.FromHexString(color[1..]);
+    if (string.IsNullOrEmpty(colorValue))
+      return new Vector4(1, 1, 1, 1);
 
-      return new Vector4(
-        parsedColor[0] / 255f,
-        parsedColor[1] / 255f,
-        parsedColor[2] / 255f,
-        1
-      );
+    // Named colors
+    return colorValue.ToLower() switch
+    {
+      "black" => new Vector4(0, 0, 0, 1),
+      "blue" => new Vector4(0, 0, 1, 1),
+      "green" => new Vector4(0, 0.502f, 0, 1),
+      "cyan" => new Vector4(0, 1, 1, 1),
+      "red" => new Vector4(1, 0, 0, 1),
+      "magenta" => new Vector4(1, 0, 1, 1),
+      "yellow" => new Vector4(1, 0.922f, 0.016f, 1),
+      "white" => new Vector4(1, 1, 1, 1),
+      "orange" => new Vector4(1, 0.647f, 0, 1),
+      "purple" => new Vector4(0.502f, 0, 0.502f, 1),
+      "brown" => new Vector4(0.647f, 0.165f, 0.165f, 1),
+      "lightblue" => new Vector4(0.678f, 0.847f, 0.902f, 1),
+      "lime" => new Vector4(0, 1, 0, 1),
+      "pink" => new Vector4(1, 0.753f, 0.796f, 1),
+      "silver" => new Vector4(0.753f, 0.753f, 0.753f, 1),
+      "gray" or "grey" => new Vector4(0.502f, 0.502f, 0.502f, 1),
+      "darkblue" => new Vector4(0, 0, 0.545f, 1),
+      "navy" => new Vector4(0, 0, 0.502f, 1),
+      "maroon" => new Vector4(0.502f, 0, 0, 1),
+      "teal" => new Vector4(0, 0.502f, 0.502f, 1),
+      _ => ParseHexColor(colorValue)
+    };
+  }
+
+  /// <summary>
+  /// Parse hex color values (#RGB, #RRGGBB, #RRGGBBAA).
+  /// </summary>
+  private Vector4 ParseHexColor(string hex)
+  {
+    if (!hex.StartsWith("#"))
+      return new Vector4(1, 1, 1, 1);
+
+    try
+    {
+      hex = hex[1..]; // Remove #
+      
+      return hex.Length switch
+      {
+        3 => new Vector4( // #RGB
+          Convert.ToInt32(hex[0].ToString() + hex[0], 16) / 255f,
+          Convert.ToInt32(hex[1].ToString() + hex[1], 16) / 255f,
+          Convert.ToInt32(hex[2].ToString() + hex[2], 16) / 255f,
+          1f),
+        6 => new Vector4( // #RRGGBB
+          Convert.ToInt32(hex[0..2], 16) / 255f,
+          Convert.ToInt32(hex[2..4], 16) / 255f,
+          Convert.ToInt32(hex[4..6], 16) / 255f,
+          1f),
+        8 => new Vector4( // #RRGGBBAA
+          Convert.ToInt32(hex[0..2], 16) / 255f,
+          Convert.ToInt32(hex[2..4], 16) / 255f,
+          Convert.ToInt32(hex[4..6], 16) / 255f,
+          Convert.ToInt32(hex[6..8], 16) / 255f),
+        _ => new Vector4(1, 1, 1, 1)
+      };
+    }
+    catch
+    {
+      return new Vector4(1, 1, 1, 1);
+    }
+  }
+
+  /// <summary>
+  /// Parse size value - supports absolute, percentage, em, and px units.
+  /// </summary>
+  private float ParseSize(string sizeValue)
+  {
+    if (string.IsNullOrEmpty(sizeValue))
+      return 1.0f;
+
+    try
+    {
+      if (sizeValue.EndsWith("%"))
+      {
+        // Percentage
+        if (float.TryParse(sizeValue[..^1], NumberStyles.Float, CultureInfo.InvariantCulture, out float percent))
+          return percent / 100f;
+      }
+      else if (sizeValue.EndsWith("em"))
+      {
+        // Font units
+        if (float.TryParse(sizeValue[..^2], NumberStyles.Float, CultureInfo.InvariantCulture, out float em))
+          return em;
+      }
+      else if (sizeValue.EndsWith("px"))
+      {
+        // Pixel units (treat as absolute)
+        if (float.TryParse(sizeValue[..^2], NumberStyles.Float, CultureInfo.InvariantCulture, out float px))
+          return px / 36f; // Approximate conversion
+      }
+      else
+      {
+        // Absolute value
+        if (float.TryParse(sizeValue, NumberStyles.Float, CultureInfo.InvariantCulture, out float absolute))
+          return absolute;
+      }
+    }
+    catch
+    {
+      // Fall through to default
     }
 
-    return default;
+    return 1.0f;
+  }
+
+  /// <summary>
+  /// Parse alpha value (0-1 or 0-255).
+  /// </summary>
+  private float ParseAlpha(string alphaValue)
+  {
+    if (string.IsNullOrEmpty(alphaValue))
+      return 1.0f;
+
+    if (float.TryParse(alphaValue, NumberStyles.Float, CultureInfo.InvariantCulture, out float alpha))
+    {
+      // If value > 1, assume it's in 0-255 range
+      return alpha > 1.0f ? alpha / 255f : alpha;
+    }
+
+    return 1.0f;
+  }
+
+  /// <summary>
+  /// Check if character is valid for tag names (letters, digits, hyphens).
+  /// </summary>
+  private static bool IsTagNameChar(char c) => char.IsLetterOrDigit(c) || c == '-';
+
+  /// <summary>
+  /// Skip whitespace characters.
+  /// </summary>
+  private void SkipWhitespace()
+  {
+    while (pos < input.Length && char.IsWhiteSpace(input[pos]))
+      pos++;
   }
 }

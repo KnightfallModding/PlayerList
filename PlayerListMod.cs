@@ -1,16 +1,16 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
-
 using MelonLoader;
-
 using PlayerList;
 using PlayerList.GUI.Tabs;
 using PlayerList.Utils;
-
 using UnityEngine;
+using Renderer = PlayerList.GUI.Renderer;
 
-[assembly: MelonInfo(typeof(PlayerListMod), PlayerListModInfo.MOD_NAME, PlayerListModInfo.MOD_VERSION, PlayerListModInfo.MOD_AUTHOR, $"{PlayerListModInfo.MOD_LINK}/releases/latest/download/Release.zip")]
+[assembly:
+  MelonInfo(typeof(PlayerListMod), PlayerListModInfo.MOD_NAME, PlayerListModInfo.MOD_VERSION,
+    PlayerListModInfo.MOD_AUTHOR, $"{PlayerListModInfo.MOD_LINK}/releases/latest/download/Release.zip")]
 [assembly: MelonGame("Landfall Games", "Knightfall")]
 
 namespace PlayerList;
@@ -34,7 +34,7 @@ internal class PlayerListMod : MelonMod
       PlayersTab.CustomPlayers = new List<APIPlayer>();
     }
 
-    var renderer = new GUI.Renderer();
+    var renderer = new Renderer();
     _ = Task.Run(() => renderer.Run());
 
     var managerGo = new GameObject(PlayerListModInfo.MOD_NAME) { hideFlags = HideFlags.HideAndDontSave };

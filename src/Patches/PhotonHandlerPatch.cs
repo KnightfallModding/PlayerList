@@ -1,9 +1,6 @@
-﻿using System;
-
-using HarmonyLib;
-
+﻿using HarmonyLib;
 using Il2CppPhoton.Pun;
-
+using Il2CppPhoton.Realtime;
 using PlayerList.GUI.Tabs;
 
 namespace PlayerList.Patches;
@@ -15,13 +12,16 @@ internal static class Il2CppPhotonHandlerPatch
   [HarmonyPostfix]
   private static void OnJoinedRoomPatch()
   {
-    foreach (Il2CppPhoton.Realtime.Player player in PhotonNetwork.CurrentRoom.Players.Values)
+    foreach (Player player in PhotonNetwork.CurrentRoom.Players.Values)
       PlayersTab.Add(player);
   }
 
-  [HarmonyPatch(typeof(PhotonHandler), nameof(PhotonHandler.OnPlayerEnteredRoom), new Type[] { typeof(Il2CppPhoton.Realtime.Player) })]
+  [HarmonyPatch(typeof(PhotonHandler), nameof(PhotonHandler.OnPlayerEnteredRoom), typeof(Player))]
   [HarmonyPostfix]
-  private static void OnPlayerEnteredRoomPatch(Il2CppPhoton.Realtime.Player newPlayer) => PlayersTab.Add(newPlayer);
+  private static void OnPlayerEnteredRoomPatch(Player newPlayer)
+  {
+    PlayersTab.Add(newPlayer);
+  }
 
   [HarmonyPatch(typeof(PhotonHandler), nameof(PhotonHandler.OnPlayerLeftRoom))]
   [HarmonyPostfix]
@@ -29,7 +29,7 @@ internal static class Il2CppPhotonHandlerPatch
   {
     PlayersTab.Clear();
 
-    foreach (Il2CppPhoton.Realtime.Player player in PhotonNetwork.CurrentRoom.Players.Values)
+    foreach (Player player in PhotonNetwork.CurrentRoom.Players.Values)
       PlayersTab.Add(player);
   }
 }
