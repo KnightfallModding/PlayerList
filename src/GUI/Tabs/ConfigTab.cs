@@ -1,10 +1,9 @@
 using System;
-using System.Drawing;
-using System.Numerics;
-
 using Hexa.NET.ImGui;
-
 using PlayerList.Utils;
+using UnityEngine;
+using Color = System.Drawing.Color;
+using Vector4 = System.Numerics.Vector4;
 
 namespace PlayerList.GUI.Tabs;
 
@@ -42,13 +41,13 @@ internal static class ConfigTab
 
   private static void ChangePositionPicker()
   {
-    PositionEnum currentPosition = ConfigManager.Position.Value;
+    var currentPosition = ConfigManager.Position.Value;
 
     if (ImGui.BeginCombo("Position", currentPosition.ToString(), ImGuiComboFlags.None))
     {
-      foreach (string position in Enum.GetNames(typeof(PositionEnum)))
+      foreach (var position in Enum.GetNames(typeof(PositionEnum)))
       {
-        bool isSelected = currentPosition.ToString() == position;
+        var isSelected = currentPosition.ToString() == position;
 
         if (ImGui.Selectable(position, isSelected))
           ConfigManager.Position.Value = (PositionEnum)Enum.Parse(typeof(PositionEnum), position);
@@ -60,16 +59,16 @@ internal static class ConfigTab
 
   private static void ToggleMenuCheckbox()
   {
-    bool isMenuEnabled = Renderer.IsVisible;
+    var isMenuEnabled = ConfigManager.EnableMenu.Value;
 
     _ = ImGui.Checkbox("Enable menu", ref isMenuEnabled);
-    if (isMenuEnabled != Renderer.IsVisible)
+    if (isMenuEnabled != ConfigManager.EnableMenu.Value)
       Renderer.ToggleMenu();
   }
 
   private static void ToggleUsernamesCheckbox()
   {
-    bool areUsernamesDisplayed = ConfigManager.DisplayUsernames.Value;
+    var areUsernamesDisplayed = ConfigManager.DisplayUsernames.Value;
 
     _ = ImGui.Checkbox("Display usernames", ref areUsernamesDisplayed);
     if (areUsernamesDisplayed != ConfigManager.DisplayUsernames.Value)
@@ -78,17 +77,12 @@ internal static class ConfigTab
 
   private static void ChangeOpacitySlider()
   {
-    Vector4 windowBg = ImGui.GetStyle().Colors[(int)ImGuiCol.WindowBg];
+    var windowBg = ImGui.GetStyle().Colors[(int)ImGuiCol.WindowBg];
     var currentAlpha = (int)(windowBg.W * 100);
 
     if (ImGui.SliderInt("Opacity", ref currentAlpha, 0, 100) && currentAlpha / 100f != windowBg.W)
-    {
       ImGui.GetStyle().Colors[(int)ImGuiCol.WindowBg].W = currentAlpha / 100f;
-    }
-    else if (ImGui.IsItemDeactivated())
-    {
-      ConfigManager.Opacity.Value = currentAlpha / 100f;
-    }
+    else if (ImGui.IsItemDeactivated()) ConfigManager.Opacity.Value = currentAlpha / 100f;
   }
 
   private static void KeybindsCategory()
@@ -106,8 +100,8 @@ internal static class ConfigTab
     if (CurrentlySettingKeybind is null)
       return;
 
-    InputsManager.GetKeybind(out bool control, out bool shift, out bool alt, out ImGuiKey key);
-    if (key == ImGuiKey.None)
+    InputsManager.GetKeybind(out var control, out var shift, out var alt, out var key);
+    if (key == KeyCode.None)
       return;
 
     CurrentlySettingKeybind.Control = control;
@@ -121,7 +115,7 @@ internal static class ConfigTab
   private static void KeybindGroup<T>(string name, ConfigWithKeybind<T> config)
   {
     var currentKey = "";
-    Keybind keybind = config.Keybind;
+    var keybind = config.Keybind;
     if (keybind.Control)
       currentKey += "Ctrl + ";
 
@@ -144,10 +138,11 @@ internal static class ConfigTab
     }
     else
     {
-      _ = (CurrentlySettingKeybind == config.Keybind)
+      _ = CurrentlySettingKeybind == config.Keybind
         ? ImGui.Button($"...###{config.Name}")
         : ImGui.Button($"{currentKey}###{config.Name}");
     }
+
     ImGui.EndGroup();
   }
 
@@ -178,16 +173,12 @@ internal static class ConfigTab
 
   private static void FontSizeSlider()
   {
-    int currentFontSize = ConfigManager.FontSize.Value;
+    var currentFontSize = ConfigManager.FontSize.Value;
 
-    if (ImGui.SliderInt("FontSize", ref currentFontSize, FontsManager.MinFontSize, FontsManager.MaxFontSize) && currentFontSize != ConfigManager.FontSize.Value)
-    {
+    if (ImGui.SliderInt("FontSize", ref currentFontSize, FontsManager.MinFontSize, FontsManager.MaxFontSize) &&
+        currentFontSize != ConfigManager.FontSize.Value)
       ConfigManager.FontSize.Value = currentFontSize;
-    }
-    else if (ImGui.IsItemDeactivated())
-    {
-      Renderer.ChangeFontSize(currentFontSize);
-    }
+    else if (ImGui.IsItemDeactivated()) Renderer.ChangeFontSize(currentFontSize);
   }
 
   private static void AdminCategory()
@@ -204,23 +195,15 @@ internal static class ConfigTab
 #endif
   }
 
-  private static void UUIDInput()
-  {
-    _ = ImGui.InputTextWithHint("##UUID", "UUID", ref UUID, 24);
-  }
+  private static void UUIDInput() => _ = ImGui.InputTextWithHint("##UUID", "UUID", ref UUID, 24);
 
-  private static void PrefixInput()
-  {
-    _ = ImGui.InputTextWithHint("##Prefixes", "Prefix", ref prefix, 11);
-  }
-  private static void SuffixInput()
-  {
-    _ = ImGui.InputTextWithHint("##Suffixes", "Suffix", ref suffix, 11);
-  }
+  private static void PrefixInput() => _ = ImGui.InputTextWithHint("##Prefixes", "Prefix", ref prefix, 11);
+
+  private static void SuffixInput() => _ = ImGui.InputTextWithHint("##Suffixes", "Suffix", ref suffix, 11);
 
   private static void ConfirmButton()
   {
-    Color orange = Color.Orange;
+    var orange = Color.Orange;
     var color = new Vector4(orange.R, orange.G, orange.B, 1f);
     ImGui.TextColored(color, "Not implemented yet...");
 

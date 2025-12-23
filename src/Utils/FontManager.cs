@@ -1,7 +1,5 @@
 using System.IO;
-
 using Hexa.NET.ImGui;
-using Hexa.NET.ImGui.Utilities;
 
 namespace PlayerList.Utils;
 
@@ -15,59 +13,47 @@ public enum FontWeight
 
 internal class FontsManager
 {
-  public static ImFontPtr RegularFont { get; private set; }
-  public static ImFontPtr BoldFont { get; private set; }
-  public static ImFontPtr ItalicFont { get; private set; }
-  public static ImFontPtr BoldItalicFont { get; private set; }
-  public static int DefaultFontSize { get; } = 16;
-  public static int MinFontSize { get; } = 14;
-  public static int MaxFontSize { get; } = 18;
+  private readonly string emojisFontName;
+  private readonly string fontName;
+  private readonly ImGuiIOPtr io;
 
   private readonly string path;
-  private readonly string fontName;
-  private readonly string emojisFontName;
 
   public FontsManager(string path, string fontName, string emojisFontName)
   {
     this.path = path;
     this.fontName = fontName;
     this.emojisFontName = emojisFontName;
+    io = ImGui.GetIO();
 
     RegularFont = LoadFont(FontWeight.Regular);
     BoldFont = LoadFont(FontWeight.Bold);
     ItalicFont = LoadFont(FontWeight.Italic);
     BoldItalicFont = LoadFont(FontWeight.BoldItalic);
+
+    io.FontDefault = RegularFont;
   }
 
-  private ImFontPtr LoadFont(FontWeight weight)
+  public static ImFontPtr RegularFont { get; private set; }
+  public static ImFontPtr BoldFont { get; private set; }
+  public static ImFontPtr ItalicFont { get; private set; }
+  public static ImFontPtr BoldItalicFont { get; private set; }
+  public static int DefaultFontSize => 16;
+  public static int MinFontSize => 14;
+  public static int MaxFontSize => 18;
+
+  private unsafe ImFontPtr LoadFont(FontWeight weight)
   {
-    _ = new ImGuiFontBuilder()
-      .AddDefaultFont()
-      .SetOption(static cfg =>
-      {
-        cfg.MergeMode = false;
-        cfg.OversampleH = 1;
-        cfg.OversampleV = 1;
-        cfg.PixelSnapH = true;
-        cfg.FontBuilderFlags |= (uint)ImGuiFreeTypeBuilderFlags.LoadColor;
-      })
-      .AddFontFromFileTTF(Path.Combine(path, $"{fontName}-{weight}.ttf"), DefaultFontSize, [0x1, 0x1FFFF])
-      .Build();
+    io.Fonts.AddFontFromFileTTF(Path.Combine(path, $"{fontName}-{weight}.ttf"), DefaultFontSize);
 
     return LoadEmojisFont();
   }
 
-  private ImFontPtr LoadEmojisFont()
+  private unsafe ImFontPtr LoadEmojisFont()
   {
-    return new ImGuiFontBuilder().SetOption(static cfg =>
-    {
-      cfg.MergeMode = true;
-      cfg.OversampleH = 1;
-      cfg.OversampleV = 1;
-      cfg.PixelSnapH = true;
-      cfg.FontBuilderFlags |= (uint)ImGuiFreeTypeBuilderFlags.LoadColor;
-    })
-      .AddFontFromFileTTF(Path.Combine(path, $"{emojisFontName}.ttf"), DefaultFontSize, [0x1, 0x1FFFF])
-      .Build();
+    var fontConfig = ImGui.ImFontConfig();
+    fontConfig.MergeMode = true;
+
+    return io.Fonts.AddFontFromFileTTF(Path.Combine(path, $"{emojisFontName}.ttf"), DefaultFontSize, fontConfig);
   }
 }

@@ -1,131 +1,93 @@
 using System.IO;
-using System.Threading.Tasks;
-
-using ClickableTransparentOverlay;
-
 using Hexa.NET.ImGui;
-
 using HexaGen.Runtime;
-
 using MelonLoader;
 using MelonLoader.Utils;
-
 using PlayerList.GUI.Skins.Default;
 using PlayerList.GUI.Tabs;
 using PlayerList.Utils;
-
 using UnityEngine;
+using Vector2 = System.Numerics.Vector2;
 
 namespace PlayerList.GUI;
 
-internal class Renderer : Overlay
+internal class Renderer
 {
-  public static bool IsVisible { get; set; } = true;
-
-  private float windowWidth;
+  private bool initialized;
   private float windowHeight;
 
-  public Renderer() : base(PlayerListModInfo.MOD_NAME, true, Screen.width, Screen.height)
-  {
-    // Avoid `cimgui.dll` not being detected
-    // LibraryLoader.CustomLoadFolders.Add(Path.Combine(Paths.PluginPath, MyPluginInfo.MOD_NAME, "runtime"));
-    LibraryLoader.CustomLoadFolders.Add(Path.Combine(MelonEnvironment.ModsDirectory, PlayerListModInfo.MOD_NAME));
+  private float windowWidth;
 
-    FPSLimit = 30;
-    VSync = false;
+  public Renderer()
+  {
+    LibraryLoader.CustomLoadFolders.Add(Path.Combine(MelonEnvironment.ModsDirectory, PlayerListModInfo.MOD_NAME));
 
     MelonDebug.Msg("Renderer has been created.");
   }
 
-  protected override unsafe Task PostInitialized()
+  private void Init()
   {
-    StartProcessHider();
-
-    // string fontPath = Path.Combine(Paths.PluginPath, MyPluginInfo.MOD_NAME, "assets", "fonts");
-    string fontPath = Path.Combine(MelonEnvironment.ModsDirectory, PlayerListModInfo.MOD_NAME, "assets", "fonts");
+    var fontPath = Path.Combine(MelonEnvironment.ModsDirectory, PlayerListModInfo.MOD_NAME, "assets", "fonts");
     const string fontName = "UbuntuMonoNerdFontMono";
     const string emojisFontName = "Twemoji";
-    _ = ReplaceFont(__ => _ = new FontsManager(fontPath, fontName, emojisFontName));
+    _ = new FontsManager(fontPath, fontName, emojisFontName);
     LoadStyle();
 
-    return Task.CompletedTask;
+    initialized = true;
   }
 
-  protected override void Render()
+  internal void Render()
   {
-    if (!IsVisible || !ConfigManager.EnableMenu.Value)
+    if (!initialized)
+      Init();
+
+    if (!ConfigManager.EnableMenu.Value)
       return;
 
     MoveWindow();
 
-    ImGui.PushFont(FontsManager.RegularFont);
-    _ = ImGui.Begin(PlayerListModInfo.MOD_NAME, ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoNav);
+    _ = ImGui.Begin(PlayerListModInfo.MOD_NAME,
+      ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoNav);
     _ = ImGui.BeginTabBar(PlayerListModInfo.MOD_GUID);
 
     windowWidth = ImGui.GetWindowWidth();
     windowHeight = ImGui.GetWindowHeight();
 
-    InputsManager.DetectImGuiKeybinds();
+    ImGui.PushFont(null, ConfigManager.FontSize.Value);
     PlayersTab.Render();
     ConfigTab.Render();
     ImGui.EndTabBar();
-    ImGui.End();
     ImGui.PopFont();
-  }
-
-  private static void StartProcessHider()
-  {
-    ProcessUtils.OverlayWindowHandle = ProcessUtils.FindWindow(null, PlayerListModInfo.MOD_NAME);
-    ProcessUtils.HideOverlayFromTaskbar();
-
-    // TODO: Improve visibility detection instead of just focus.
-    ProcessUtils.GameFocusChanged += static (_, @event) =>
-    {
-      MelonDebug.Msg($"Window focus changed: {@event.IsFocused}.");
-
-      CursorUnlocker.IsCursorUnlocked = @event.FocusedWindow == FocusedWindow.Overlay;
-      IsVisible = @event.IsFocused;
-    };
+    ImGui.End();
   }
 
   private void MoveWindow()
   {
-    int screenWidth = window.Dimensions.Width;
-    int screenHeight = window.Dimensions.Height;
+    var screenWidth = Screen.width;
+    var screenHeight = Screen.height;
 
     switch (ConfigManager.Position.Value)
     {
       case PositionEnum.TopLeft:
-        ImGui.SetNextWindowPos(new(0, 0));
+        ImGui.SetNextWindowPos(new Vector2(0, 0));
         break;
       case PositionEnum.TopRight:
-        ImGui.SetNextWindowPos(new(screenWidth - windowWidth, 0));
+        ImGui.SetNextWindowPos(new Vector2(screenWidth - windowWidth, 0));
         break;
       case PositionEnum.BottomLeft:
-        ImGui.SetNextWindowPos(new(0, screenHeight - windowHeight));
+        ImGui.SetNextWindowPos(new Vector2(0, screenHeight - windowHeight));
         break;
       case PositionEnum.BottomRight:
-        ImGui.SetNextWindowPos(new(screenWidth - windowWidth, screenHeight - windowHeight));
+        ImGui.SetNextWindowPos(new Vector2(screenWidth - windowWidth, screenHeight - windowHeight));
         break;
     }
   }
 
   private static void LoadStyle() => DefaultSkin.Setup();
 
-  public static void ToggleMenu()
-  {
-    ConfigManager.EnableMenu.Value = !ConfigManager.EnableMenu.Value;
-    IsVisible = ConfigManager.EnableMenu.Value;
-
-    if (!IsVisible || !ConfigManager.EnableMenu.Value)
-      ProcessUtils.FocusGame();
-  }
+  public static void ToggleMenu() => ConfigManager.EnableMenu.Value = !ConfigManager.EnableMenu.Value;
 
   public static void ToggleUsernames() => ConfigManager.DisplayUsernames.Value = !ConfigManager.DisplayUsernames.Value;
 
-  public static void ChangeFontSize(int fontSize)
-  {
-    ImGui.GetFont().Scale = fontSize / (float)FontsManager.DefaultFontSize;
-    ConfigManager.FontSize.Value = fontSize;
-  }
+  public static void ChangeFontSize(int fontSize) => ConfigManager.FontSize.Value = fontSize;
 }

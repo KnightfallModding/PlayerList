@@ -1,54 +1,57 @@
-using Hexa.NET.ImGui;
-
-using PlayerList.GUI.Tabs;
-using Renderer = PlayerList.GUI.Renderer;
-using System.Linq;
-using UnityEngine;
-using System;
 using MelonLoader;
+using PlayerList.GUI.Tabs;
+using UnityEngine;
+using Enum = System.Enum;
+using Enumerable = System.Linq.Enumerable;
+using Renderer = PlayerList.GUI.Renderer;
 
 namespace PlayerList.Utils;
 
 [RegisterTypeInIl2Cpp]
 internal class InputsManager : MonoBehaviour
 {
-  private static readonly ImGuiKey[] BlacklistedKeys =
-[
-  ImGuiKey.MouseLeft,
-    ImGuiKey.MouseMiddle,
-    ImGuiKey.MouseRight,
-    ImGuiKey.Tab,
-    ImGuiKey.MouseWheelX,
-    ImGuiKey.MouseWheelY,
-    ImGuiKey.MouseX1,
-    ImGuiKey.MouseX2,
+  private static readonly KeyCode[] BlacklistedKeys =
+  [
+    // Left click
+    KeyCode.Mouse0,
+    // Right click
+    KeyCode.Mouse1,
+    // Middle click
+    KeyCode.Mouse2,
+    // Fourth button
+    KeyCode.Mouse3,
+    // Fifth button
+    KeyCode.Mouse4,
+    KeyCode.Tab,
 
     // Disable those keys because once set, it's impossible to use them in Unity
-    ImGuiKey.Enter,
-    ImGuiKey.KeypadEnter,
-    ImGuiKey.CapsLock,
-];
-  private static readonly ImGuiKey[] ModKeys =
+    KeyCode.Return,
+    KeyCode.KeypadEnter,
+    KeyCode.CapsLock,
+  ];
+
+  private static readonly KeyCode[] ModKeys =
   [
-    ImGuiKey.ModCtrl,
-    ImGuiKey.ReservedForModCtrl,
-    ImGuiKey.ModShift,
-    ImGuiKey.ReservedForModShift,
-    ImGuiKey.ReservedForModAlt,
-    ImGuiKey.ModAlt,
-    ImGuiKey.ReservedForModSuper,
-    ImGuiKey.ModSuper,
-    ImGuiKey.LeftSuper,
-    ImGuiKey.RightSuper,
-    ImGuiKey.PrintScreen,
+    KeyCode.LeftControl,
+    KeyCode.RightControl,
+    KeyCode.LeftShift,
+    KeyCode.RightShift,
+    KeyCode.LeftAlt,
+    KeyCode.RightAlt,
+    KeyCode.AltGr,
+    KeyCode.LeftWindows,
+    KeyCode.RightWindows,
+    KeyCode.Print,
   ];
 
   public void Update()
   {
-    if (Input.GetKeyDown(KeyMapper.ConvertImGuiToUnity(ConfigManager.EnableMenu.Keybind.Key)) && !ShouldCancel(ConfigManager.EnableMenu.Keybind))
+    if (Input.GetKeyDown(ConfigManager.EnableMenu.Keybind.Key) &&
+        !ShouldCancel(ConfigManager.EnableMenu.Keybind))
       Renderer.ToggleMenu();
 
-    if (Input.GetKeyDown(KeyMapper.ConvertImGuiToUnity(ConfigManager.DisplayUsernames.Keybind.Key)) && !ShouldCancel(ConfigManager.DisplayUsernames.Keybind))
+    if (Input.GetKeyDown(ConfigManager.DisplayUsernames.Keybind.Key) &&
+        !ShouldCancel(ConfigManager.DisplayUsernames.Keybind))
       Renderer.ToggleUsernames();
   }
 
@@ -58,9 +61,9 @@ internal class InputsManager : MonoBehaviour
     if (ConfigTab.CurrentlySettingKeybind is not null)
       return true;
 
-    bool controlPressed = isImGui ? ImGuiP.IsKeyPressed(ImGuiKey.ModCtrl) : Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
-    bool shiftPressed = isImGui ? ImGuiP.IsKeyPressed(ImGuiKey.ModShift) : Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
-    bool altPressed = isImGui ? ImGuiP.IsKeyPressed(ImGuiKey.ModAlt) : Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt);
+    var controlPressed = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
+    var shiftPressed = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+    var altPressed = Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt);
 
     if (!controlPressed && hotkey.Control)
       return true;
@@ -74,61 +77,23 @@ internal class InputsManager : MonoBehaviour
     return false;
   }
 
-  public static void DetectImGuiKeybinds()
+  public static void GetKeybind(out bool control, out bool shift, out bool alt, out KeyCode key)
   {
-    if (ImGuiP.IsKeyPressed(ConfigManager.EnableMenu.Keybind.Key) && !ShouldCancel(ConfigManager.EnableMenu.Keybind, true))
+    foreach (KeyCode keyCode in Enum.GetValues(typeof(KeyCode)))
     {
-      if (ConfigManager.EnableMenu.Value)
-      {
-        ProcessUtils.FocusGame();
-      }
-      else
-      {
-        ProcessUtils.FocusOverlay();
-      }
+      if (!Input.GetKeyDown(keyCode)) continue;
+      if (keyCode == KeyCode.Escape) continue;
+      if (Enumerable.Contains(BlacklistedKeys, keyCode) || Enumerable.Contains(ModKeys, keyCode)) continue;
 
-      Renderer.ToggleMenu();
-    }
-
-    if (ImGuiP.IsKeyPressed(ConfigManager.DisplayUsernames.Keybind.Key) && !ShouldCancel(ConfigManager.DisplayUsernames.Keybind, true))
-    {
-      if (ConfigManager.EnableMenu.Value)
-      {
-        ProcessUtils.FocusGame();
-      }
-      else
-      {
-        ProcessUtils.FocusOverlay();
-      }
-
-      ConfigManager.DisplayUsernames.Value = !ConfigManager.DisplayUsernames.Value;
-    }
-  }
-
-  public static void GetKeybind(out bool control, out bool shift, out bool alt, out ImGuiKey key)
-  {
-    for (var eventKey = ImGuiKey.NamedKeyBegin; eventKey < ImGuiKey.NamedKeyEnd; eventKey++)
-    {
-      if (!ImGuiP.IsKeyDown(eventKey))
-        continue;
-
-      if (eventKey == ImGuiKey.Escape)
-        continue;
-
-      if (BlacklistedKeys.Contains(eventKey) || ModKeys.Contains(eventKey))
-        continue;
-
-      control = ImGuiP.IsKeyDown(ImGuiKey.ModCtrl);
-      shift = ImGuiP.IsKeyDown(ImGuiKey.ModShift);
-      alt = ImGuiP.IsKeyDown(ImGuiKey.ModAlt);
-      key = eventKey;
-
-      return;
+      control = Input.GetKeyDown(KeyCode.LeftControl) || Input.GetKeyDown(KeyCode.RightControl);
+      shift = Input.GetKeyDown(KeyCode.LeftControl) || Input.GetKeyDown(KeyCode.RightControl);
+      alt = Input.GetKeyDown(KeyCode.LeftAlt) || Input.GetKeyDown(KeyCode.RightAlt);
+      key = keyCode;
     }
 
     control = false;
     shift = false;
     alt = false;
-    key = ImGuiKey.None;
+    key = KeyCode.None;
   }
 }

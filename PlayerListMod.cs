@@ -1,7 +1,8 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics;
-using System.Threading.Tasks;
+using System.IO;
+using DearImGuiInjection;
 using MelonLoader;
+using MelonLoader.Utils;
 using PlayerList;
 using PlayerList.GUI.Tabs;
 using PlayerList.Utils;
@@ -21,8 +22,6 @@ internal class PlayerListMod : MelonMod
   {
     LoggerInstance.Msg($"Plugin {PlayerListModInfo.MOD_GUID} is loaded!");
 
-    ProcessUtils.Process = Process.GetProcessesByName("Knightfall")[0];
-    ProcessUtils.GameWindowHandle = ProcessUtils.FindWindow(null, "Knightfall");
     ConfigManager.Setup();
 
     try
@@ -34,8 +33,11 @@ internal class PlayerListMod : MelonMod
       PlayersTab.CustomPlayers = new List<APIPlayer>();
     }
 
+    var imGuiConfigPath = MelonEnvironment.GameRootDirectory;
+    var assetsFolder = Path.Join(MelonEnvironment.PluginsDirectory, PlayerListModInfo.MOD_NAME, "Assets");
+    ImGuiInjector.Init(imGuiConfigPath, assetsFolder, LoggerInstance);
     var renderer = new Renderer();
-    _ = Task.Run(() => renderer.Run());
+    ImGuiInjector.Render += renderer.Render;
 
     var managerGo = new GameObject(PlayerListModInfo.MOD_NAME) { hideFlags = HideFlags.HideAndDontSave };
     _ = managerGo.AddComponent<InputsManager>();

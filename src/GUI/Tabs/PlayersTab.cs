@@ -1,7 +1,7 @@
+using System;
 using System.Collections.Generic;
-
 using Hexa.NET.ImGui;
-
+using Il2CppPhoton.Realtime;
 using PlayerList.Utils;
 
 namespace PlayerList.GUI.Tabs;
@@ -40,6 +40,7 @@ internal static class PlayersTab
 
         return;
       }
+
       if (!ConfigManager.DisplayUsernames.Value)
       {
         ImGui.EndTabItem();
@@ -47,10 +48,10 @@ internal static class PlayersTab
         return;
       }
 
-      foreach (PlayerDetails player in Players)
+      foreach (var player in Players)
       {
-        string prefixes = (player.Prefixes.Length > 0) ? string.Concat(player.Prefixes) : "";
-        string suffixes = (player.Suffixes.Length > 0) ? string.Concat(player.Suffixes) : "";
+        var prefixes = player.Prefixes.Length > 0 ? string.Concat(player.Prefixes) : "";
+        var suffixes = player.Suffixes.Length > 0 ? string.Concat(player.Suffixes) : "";
 
         if (prefixes.Length > 0)
         {
@@ -76,11 +77,11 @@ internal static class PlayersTab
 
   private static void DisplayUsername(List<TextSegment> usernameSegments)
   {
-    for (int i = 0; i < usernameSegments.Count; i++)
-    // foreach (TextSegment segment in usernameSegments)
+    for (var i = 0; i < usernameSegments.Count; i++)
+      // foreach (TextSegment segment in usernameSegments)
     {
-      TextSegment segment = usernameSegments[i];
-      ImFontPtr font = FontsManager.RegularFont;
+      var segment = usernameSegments[i];
+      var font = FontsManager.RegularFont;
 
       if (segment.Bold)
         font = FontsManager.BoldFont;
@@ -91,7 +92,7 @@ internal static class PlayersTab
       if (segment.Italic)
         font = FontsManager.ItalicFont;
 
-      ImGui.PushFont(font);
+      ImGui.PushFont(font, ConfigManager.FontSize.Value);
 
       // TODO: Implement sprite to emoji
 
@@ -99,13 +100,9 @@ internal static class PlayersTab
         ImGui.SameLine(0, 0);
 
       if (segment.Color != default)
-      {
         ImGui.TextColored(segment.Color, segment.Text);
-      }
       else
-      {
         ImGui.TextUnformatted(segment.Text);
-      }
 
       ImGui.PopFont();
     }
@@ -128,10 +125,15 @@ internal static class PlayersTab
     string[] value = [];
     return CustomPlayers.Find(player => player.UUID == UUID)?.Prefixes ?? value;
   }
-  public static string GetUsername(Il2CppPhoton.Realtime.Player player, string UUID) => CustomPlayers.Find(player => player.UUID == UUID)?.Username?.Replace("{nickname}", player.NickName) ?? player.NickName;
-  public static string[] GetSuffixes(string UUID) => CustomPlayers.Find(player => player.UUID == UUID)?.Suffixes ?? System.Array.Empty<string>();
 
-  public static void Add(Il2CppPhoton.Realtime.Player player)
+  public static string GetUsername(Player player, string UUID) =>
+    CustomPlayers.Find(player => player.UUID == UUID)?.Username?.Replace("{nickname}", player.NickName) ??
+    player.NickName;
+
+  public static string[] GetSuffixes(string UUID) =>
+    CustomPlayers.Find(player => player.UUID == UUID)?.Suffixes ?? Array.Empty<string>();
+
+  public static void Add(Player player)
   {
     var UUID = default(string);
     try
@@ -141,7 +143,7 @@ internal static class PlayersTab
     catch { }
 
     var markupParser = new XMLParser(GetUsername(player, UUID));
-    var details = new PlayerDetails()
+    var details = new PlayerDetails
     {
       LocalId = player.ActorNumber,
       UUID = UUID,
