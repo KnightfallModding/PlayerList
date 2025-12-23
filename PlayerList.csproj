@@ -3,7 +3,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <AssemblyName>com.aeryle.playerlist</AssemblyName>
     <Product>PlayerList</Product>
-    <Version>1.0.3</Version>
+    <Version>3.0.4-beta</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
     <RestoreAdditionalProjectSources>
