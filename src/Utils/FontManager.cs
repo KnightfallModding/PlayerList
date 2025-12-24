@@ -53,6 +53,7 @@ internal class FontsManager
   {
     var fontConfig = ImGui.ImFontConfig();
     fontConfig.MergeMode = true;
+    fontConfig.FontLoaderFlags = (uint)ImGuiFreeTypeLoaderFlags.LoadColor;
 
     return io.Fonts.AddFontFromFileTTF(Path.Combine(path, $"{emojisFontName}.ttf"), DefaultFontSize, fontConfig);
   }
