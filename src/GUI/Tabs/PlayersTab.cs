@@ -6,12 +6,6 @@ using PlayerList.Utils;
 
 namespace PlayerList.GUI.Tabs;
 
-public struct Prefixes
-{
-  public const string Creator = "👑";
-  public const string T1nquen = "🤡";
-}
-
 internal class PlayerDetails
 {
   public string[] Prefixes { get; set; }
