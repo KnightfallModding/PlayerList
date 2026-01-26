@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using Hexa.NET.ImGui;
 using Il2CppPhoton.Realtime;
 using PlayerList.Utils;
@@ -20,12 +21,19 @@ internal class PlayerDetails
 
 internal static class PlayersTab
 {
-  public static List<PlayerDetails> Players { get; private set; } = [];
+  private static readonly ReaderWriterLockSlim Locker = new();
+
+  public static List<PlayerDetails> Players { get; internal set; } = [];
   public static List<APIPlayer> CustomPlayers { get; set; }
 
   public static void Render()
   {
-    if (ImGui.BeginTabItem($"Players - {Players.Count}###players"))
+    if (!ImGui.BeginTabItem($"Players - {Players.Count}###players"))
+      return;
+
+    Locker.EnterReadLock();
+
+    try
     {
       if (Players.Count == 0)
       {
@@ -67,12 +75,16 @@ internal static class PlayersTab
 
       ImGui.EndTabItem();
     }
+    finally
+    {
+      Locker.ExitReadLock();
+    }
   }
 
   private static void DisplayUsername(List<TextSegment> usernameSegments)
   {
     for (var i = 0; i < usernameSegments.Count; i++)
-      // foreach (TextSegment segment in usernameSegments)
+    // foreach (TextSegment segment in usernameSegments)
     {
       var segment = usernameSegments[i];
       var font = FontsManager.RegularFont;
@@ -121,32 +133,51 @@ internal static class PlayersTab
   }
 
   public static string GetUsername(Player player, string UUID) =>
-    CustomPlayers.Find(player => player.UUID == UUID)?.Username?.Replace("{nickname}", player.NickName) ??
-    player.NickName;
+    CustomPlayers
+      .Find(player => player.UUID == UUID)
+      ?.Username?.Replace("{nickname}", player.NickName)
+    ?? player.NickName;
 
   public static string[] GetSuffixes(string UUID) =>
     CustomPlayers.Find(player => player.UUID == UUID)?.Suffixes ?? Array.Empty<string>();
 
   public static void Add(Player player)
   {
+    Locker.EnterWriteLock();
+
     var UUID = default(string);
     try
     {
       UUID = player.CustomProperties["UUID"].ToString().ToLower();
-    }
-    catch { }
 
-    var markupParser = new XMLParser(GetUsername(player, UUID));
-    var details = new PlayerDetails
+      var markupParser = new XMLParser(GetUsername(player, UUID));
+      var details = new PlayerDetails
+      {
+        LocalId = player.ActorNumber,
+        UUID = UUID,
+        Prefixes = GetPrefixes(UUID),
+        Username = markupParser.Parse(),
+        Suffixes = GetSuffixes(UUID),
+      };
+      Players.Add(details);
+    }
+    finally
     {
-      LocalId = player.ActorNumber,
-      UUID = UUID,
-      Prefixes = GetPrefixes(UUID),
-      Username = markupParser.Parse(),
-      Suffixes = GetSuffixes(UUID),
-    };
-    Players.Add(details);
+      Locker.ExitWriteLock();
+    }
   }
 
-  public static void Clear() => Players = new List<PlayerDetails>();
+  public static void Clear()
+  {
+    Locker.EnterWriteLock();
+
+    try
+    {
+      Players.Clear();
+    }
+    finally
+    {
+      Locker.ExitWriteLock();
+    }
+  }
 }

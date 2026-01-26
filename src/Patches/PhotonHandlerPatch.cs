@@ -1,4 +1,5 @@
-﻿using HarmonyLib;
+﻿using System.Linq;
+using HarmonyLib;
 using Il2CppPhoton.Pun;
 using Il2CppPhoton.Realtime;
 using PlayerList.GUI.Tabs;
@@ -18,18 +19,12 @@ internal static class Il2CppPhotonHandlerPatch
 
   [HarmonyPatch(typeof(PhotonHandler), nameof(PhotonHandler.OnPlayerEnteredRoom), typeof(Player))]
   [HarmonyPostfix]
-  private static void OnPlayerEnteredRoomPatch(Player newPlayer)
-  {
-    PlayersTab.Add(newPlayer);
-  }
+  private static void OnPlayerEnteredRoomPatch(Player newPlayer) => PlayersTab.Add(newPlayer);
 
   [HarmonyPatch(typeof(PhotonHandler), nameof(PhotonHandler.OnPlayerLeftRoom))]
   [HarmonyPostfix]
-  private static void OnPlayerLeftRoomPatch()
-  {
-    PlayersTab.Clear();
-
-    foreach (Player player in PhotonNetwork.CurrentRoom.Players.Values)
-      PlayersTab.Add(player);
-  }
+  private static void OnPlayerLeftRoomPatch(Player otherPlayer) =>
+    PlayersTab.Players = PlayersTab
+      .Players.Where(player => player.LocalId != otherPlayer.ActorNumber)
+      .ToList();
 }

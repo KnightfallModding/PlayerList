@@ -13,7 +13,8 @@ internal static class DamageableEventPatch
   [HarmonyPostfix]
   private static void RPCA_Die(PL_Damagable __instance)
   {
-    if (PhotonNetwork.CurrentRoom.Name.Length != 5) return;
+    if (PhotonNetwork.CurrentRoom.Name.Length != 5)
+      return;
 
     var killedPlayer = __instance.damagable.player;
     PlayerHandler.TryGetTeam(killedPlayer.TeamID, out var team);
@@ -24,16 +25,20 @@ internal static class DamageableEventPatch
     {
       foreach (var player in teamPlayers)
       {
-        var details =
-          PlayersTab.Players.Find(playerDetails => playerDetails.LocalId == player.refs.view.OwnerActorNr);
+        var details = PlayersTab.Players.Find(playerDetails =>
+          playerDetails.LocalId == player.refs.view.OwnerActorNr
+        );
+        if (details.Suffixes.Contains("🏳️"))
+          continue;
 
         details.Suffixes = details.Suffixes.Where(suffix => suffix != "💀").Append("🏳️").ToArray();
       }
     }
     else
     {
-      var details =
-        PlayersTab.Players.Find(playerDetails => playerDetails.LocalId == killedPlayer.refs.view.OwnerActorNr);
+      var details = PlayersTab.Players.Find(playerDetails =>
+        playerDetails.LocalId == killedPlayer.refs.view.OwnerActorNr
+      );
       details.Suffixes = details.Suffixes.Append("💀").ToArray();
     }
   }
