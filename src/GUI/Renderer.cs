@@ -52,13 +52,18 @@ internal class Renderer
 
     windowWidth = ImGui.GetWindowWidth();
     windowHeight = ImGui.GetWindowHeight();
-
-    ImGui.PushFont(null, ConfigManager.FontSize.Value);
-    PlayersTab.Render();
-    ConfigTab.Render();
-    ImGui.EndTabBar();
-    ImGui.PopFont();
-    ImGui.End();
+    try
+    {
+      ImGui.PushFont(null, ConfigManager.FontSize.Value);
+      PlayersTab.Render();
+      ConfigTab.Render();
+    }
+    finally
+    {
+      ImGui.EndTabBar();
+      ImGui.PopFont();
+      ImGui.End();
+    }
   }
 
   private void MoveWindow()
@@ -83,11 +88,23 @@ internal class Renderer
     }
   }
 
-  private static void LoadStyle() => DefaultSkin.Setup();
+  private static void LoadStyle()
+  {
+    DefaultSkin.Setup();
+  }
 
-  public static void ToggleMenu() => ConfigManager.EnableMenu.Value = !ConfigManager.EnableMenu.Value;
+  public static void ToggleMenu()
+  {
+    ConfigManager.EnableMenu.Value = !ConfigManager.EnableMenu.Value;
+  }
 
-  public static void ToggleUsernames() => ConfigManager.DisplayUsernames.Value = !ConfigManager.DisplayUsernames.Value;
+  public static void ToggleUsernames()
+  {
+    ConfigManager.DisplayUsernames.Value = !ConfigManager.DisplayUsernames.Value;
+  }
 
-  public static void ChangeFontSize(int fontSize) => ConfigManager.FontSize.Value = fontSize;
+  public static void ChangeFontSize(int fontSize)
+  {
+    ConfigManager.FontSize.Value = fontSize;
+  }
 }

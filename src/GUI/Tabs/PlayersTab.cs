@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using Hexa.NET.ImGui;
 using Il2CppPhoton.Realtime;
+using MelonLoader;
 using PlayerList.Utils;
 
 namespace PlayerList.GUI.Tabs;
@@ -75,6 +76,11 @@ internal static class PlayersTab
 
       ImGui.EndTabItem();
     }
+    catch (Exception ex)
+    {
+      Melon<PlayerListMod>.Logger.Error($"Error caught: {ex}");
+      ImGui.EndTabItem();
+    }
     finally
     {
       Locker.ExitReadLock();
@@ -84,7 +90,7 @@ internal static class PlayersTab
   private static void DisplayUsername(List<TextSegment> usernameSegments)
   {
     for (var i = 0; i < usernameSegments.Count; i++)
-    // foreach (TextSegment segment in usernameSegments)
+      // foreach (TextSegment segment in usernameSegments)
     {
       var segment = usernameSegments[i];
       var font = FontsManager.RegularFont;
@@ -132,34 +138,102 @@ internal static class PlayersTab
     return CustomPlayers.Find(player => player.UUID == UUID)?.Prefixes ?? value;
   }
 
-  public static string GetUsername(Player player, string UUID) =>
-    CustomPlayers
-      .Find(player => player.UUID == UUID)
-      ?.Username?.Replace("{nickname}", player.NickName)
-    ?? player.NickName;
+  public static string GetUsername(Player player, string UUID)
+  {
+    return CustomPlayers
+             .Find(player => player.UUID == UUID)
+             ?.Username?.Replace("{nickname}", player.NickName)
+           ?? player.NickName;
+  }
 
-  public static string[] GetSuffixes(string UUID) =>
-    CustomPlayers.Find(player => player.UUID == UUID)?.Suffixes ?? Array.Empty<string>();
+  public static string[] GetSuffixes(string UUID)
+  {
+    return CustomPlayers.Find(player => player.UUID == UUID)?.Suffixes ?? Array.Empty<string>();
+  }
+
+  // public static void Add(Player player)
+  // {
+  //   Locker.EnterWriteLock();
+  //
+  //   var UUID = default(string);
+  //   try
+  //   {
+  //     UUID = player.CustomProperties["UUID"].ToString().ToLower();
+  //
+  //     var markupParser = new XMLParser(GetUsername(player, UUID));
+  //     var details = new PlayerDetails
+  //     {
+  //       LocalId = player.ActorNumber,
+  //       UUID = UUID,
+  //       Prefixes = GetPrefixes(UUID),
+  //       Username = markupParser.Parse(),
+  //       Suffixes = GetSuffixes(UUID),
+  //     };
+  //     Players.Add(details);
+  //   }
+  //   finally
+  //   {
+  //     Locker.ExitWriteLock();
+  //   }
+  // }
 
   public static void Add(Player player)
   {
     Locker.EnterWriteLock();
 
-    var UUID = default(string);
     try
     {
-      UUID = player.CustomProperties["UUID"].ToString().ToLower();
+      // Check if UUID exists first
+      if (!player.CustomProperties.ContainsKey("UUID"))
+      {
+        MelonLogger.Warning(
+          $"Player {player.NickName} (Actor {player.ActorNumber}) doesn't have UUID property. Using fallback."
+        );
 
-      var markupParser = new XMLParser(GetUsername(player, UUID));
-      var details = new PlayerDetails
+        // Add player without UUID
+        var markupParser = new XMLParser(player.NickName);
+        var details = new PlayerDetails
+        {
+          LocalId = player.ActorNumber,
+          UUID = null,
+          Prefixes = Array.Empty<string>(),
+          Username = markupParser.Parse(),
+          Suffixes = Array.Empty<string>()
+        };
+        Players.Add(details);
+        return;
+      }
+
+      var UUID = player.CustomProperties["UUID"].ToString().ToLower();
+      var markupParser2 = new XMLParser(GetUsername(player, UUID));
+      var details2 = new PlayerDetails
       {
         LocalId = player.ActorNumber,
         UUID = UUID,
         Prefixes = GetPrefixes(UUID),
-        Username = markupParser.Parse(),
-        Suffixes = GetSuffixes(UUID),
+        Username = markupParser2.Parse(),
+        Suffixes = GetSuffixes(UUID)
       };
-      Players.Add(details);
+      Players.Add(details2);
+    }
+    catch (Exception ex)
+    {
+      MelonLogger.Error($"Failed to add player {player.NickName}: {ex.Message}");
+      MelonLogger.Error(ex.StackTrace);
+    }
+    finally
+    {
+      Locker.ExitWriteLock();
+    }
+  }
+
+  public static void Remove(int actorNumber)
+  {
+    Locker.EnterWriteLock();
+
+    try
+    {
+      Players.RemoveAll(player => player.LocalId == actorNumber);
     }
     finally
     {

@@ -24,7 +24,5 @@ internal static class Il2CppPhotonHandlerPatch
   [HarmonyPatch(typeof(PhotonHandler), nameof(PhotonHandler.OnPlayerLeftRoom))]
   [HarmonyPostfix]
   private static void OnPlayerLeftRoomPatch(Player otherPlayer) =>
-    PlayersTab.Players = PlayersTab
-      .Players.Where(player => player.LocalId != otherPlayer.ActorNumber)
-      .ToList();
+    PlayersTab.Remove(otherPlayer.ActorNumber);
 }
